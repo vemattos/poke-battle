@@ -1,5 +1,6 @@
 package com.example.stadiumservice.consumer;
 
+import com.example.stadiumservice.config.RabbitMQConfig;
 import com.example.stadiumservice.dto.BattleMessage;
 import com.example.stadiumservice.service.BattleService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -14,9 +15,9 @@ public class BattleConsumer {
         this.battleService = battleService;
     }
 
-    @RabbitListener(queues = "${rabbitmq.queue.name:battle.queue}")
-    public void receiveMessage(BattleMessage message) {
-        System.out.println("Mensagem recebida no Stadium: " + message.getType() + " - " + message.getUser().getName());
+    @RabbitListener(queues = RabbitMQConfig.BATTLE_REQUEST_QUEUE)
+    public void receiveBattleRequest(BattleMessage message) {
+        System.out.println("[STADIUM] Request recebido: " + message.getType() + " - " + message.getUser().getName());
 
         switch (message.getType()) {
             case LOGIN:
@@ -26,7 +27,7 @@ public class BattleConsumer {
                 battleService.handleBattleAction(message);
                 break;
             default:
-                System.out.println("Tipo de mensagem não reconhecido: " + message.getType());
+                System.out.println("Tipo de request não reconhecido: " + message.getType());
         }
     }
 }

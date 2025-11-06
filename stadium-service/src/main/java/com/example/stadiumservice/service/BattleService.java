@@ -1,5 +1,6 @@
 package com.example.stadiumservice.service;
 
+import com.example.stadiumservice.config.RabbitMQConfig;
 import com.example.stadiumservice.dto.BattleMessage;
 import com.example.stadiumservice.dto.UserDTO;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -11,10 +12,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class BattleService {
 
     private final RabbitTemplate rabbitTemplate;
-
     private final ConcurrentLinkedQueue<UserDTO> waitingPlayers = new ConcurrentLinkedQueue<>();
-
-    private final ConcurrentHashMap<String, BattleSession> activeBattles = new ConcurrentHashMap<>();
 
     public BattleService(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
@@ -26,8 +24,7 @@ public class BattleService {
         if (waitingPlayers.isEmpty()) {
             waitingPlayers.offer(user);
             System.out.println(user.getName() + " esperando oponente...");
-
-            sendWaitingMessage(user);
+            sendWaitingResponse(user);
         } else {
             UserDTO player1 = waitingPlayers.poll();
             UserDTO player2 = user;
@@ -40,50 +37,35 @@ public class BattleService {
     private void startBattle(UserDTO player1, UserDTO player2) {
         String battleId = "battle-" + System.currentTimeMillis();
 
-        BattleSession battle = new BattleSession(battleId, player1, player2);
-        activeBattles.put(battleId, battle);
-
-        sendBattleStartMessage(player1, battleId);
-        sendBattleStartMessage(player2, battleId);
-
         System.out.println("Batalha " + battleId + " iniciada!");
+
+        sendBattleStartResponse(player1, battleId, player2.getName());
+        sendBattleStartResponse(player2, battleId, player1.getName());
     }
 
-    private void sendWaitingMessage(UserDTO user) {
+    private void sendWaitingResponse(UserDTO user) {
         BattleMessage message = new BattleMessage();
         message.setType(BattleMessage.MessageType.LOGIN);
         message.setUser(user);
         message.setBattleId("waiting");
 
-        rabbitTemplate.convertAndSend("battle.exchange", "player." + user.getId(), message);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
+        System.out.println("[STADIUM] Waiting response enviada para: " + user.getName());
     }
 
-    private void sendBattleStartMessage(UserDTO user, String battleId) {
+    private void sendBattleStartResponse(UserDTO user, String battleId, String opponentName) {
         BattleMessage message = new BattleMessage();
         message.setType(BattleMessage.MessageType.BATTLE_START);
         message.setUser(user);
         message.setBattleId(battleId);
+        message.setOpponentName(opponentName);
 
-        rabbitTemplate.convertAndSend("battle.exchange", "player." + user.getId(), message);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
+        System.out.println("[STADIUM] Battle start enviado para: " + user.getName() + " vs " + opponentName);
     }
 
     public void handleBattleAction(BattleMessage message) {
-        System.out.println("Ação de batalha recebida: " + message);
-    }
-
-    private static class BattleSession {
-        private final String battleId;
-        private final UserDTO player1;
-        private final UserDTO player2;
-
-        public BattleSession(String battleId, UserDTO player1, UserDTO player2) {
-            this.battleId = battleId;
-            this.player1 = player1;
-            this.player2 = player2;
-        }
-
-        public String getBattleId() { return battleId; }
-        public UserDTO getPlayer1() { return player1; }
-        public UserDTO getPlayer2() { return player2; }
+        System.out.println("🎯 Ação de batalha recebida: " + message.getBattleId());
+        // Implementar lógica de batalha
     }
 }

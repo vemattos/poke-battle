@@ -23,8 +23,8 @@ public class BattlePublisher {
         message.setType(BattleMessage.MessageType.LOGIN);
         message.setUser(userDTO);
 
-        rabbitTemplate.convertAndSend("battle.queue", message);
-        System.out.println("Mensagem LOGIN enviada para o Stadium: " + user.getName());
+        rabbitTemplate.convertAndSend("battle.request.queue", message);
+        System.out.println("[PLAYER] Login request enviado para battle.request.queue: " + user.getName());
     }
 
     private UserDTO convertToDTO(User user) {
