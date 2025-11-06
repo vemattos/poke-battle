@@ -16,7 +16,7 @@ public class BattleConsumer {
 
     @RabbitListener(queues = "${rabbitmq.queue.name:battle.queue}")
     public void receiveMessage(BattleMessage message) {
-        System.out.println("📨 Mensagem recebida no Stadium: " + message.getType() + " - " + message.getUser().getName());
+        System.out.println("Mensagem recebida no Stadium: " + message.getType() + " - " + message.getUser().getName());
 
         switch (message.getType()) {
             case LOGIN:

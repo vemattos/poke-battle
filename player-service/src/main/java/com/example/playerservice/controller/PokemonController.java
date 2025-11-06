@@ -41,7 +41,6 @@ public class PokemonController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePokemon(@PathVariable int id) {
         try {

@@ -21,18 +21,18 @@ public class BattleService {
     }
 
     public void handlePlayerLogin(UserDTO user) {
-        System.out.println("🎮 Jogador " + user.getName() + " entrou no stadium");
+        System.out.println("Jogador " + user.getName() + " entrou no stadium");
 
         if (waitingPlayers.isEmpty()) {
             waitingPlayers.offer(user);
-            System.out.println("⏳ " + user.getName() + " esperando oponente...");
+            System.out.println(user.getName() + " esperando oponente...");
 
             sendWaitingMessage(user);
         } else {
             UserDTO player1 = waitingPlayers.poll();
             UserDTO player2 = user;
 
-            System.out.println("⚔️ Batalha encontrada: " + player1.getName() + " vs " + player2.getName());
+            System.out.println("Batalha encontrada: " + player1.getName() + " vs " + player2.getName());
             startBattle(player1, player2);
         }
     }
@@ -46,7 +46,7 @@ public class BattleService {
         sendBattleStartMessage(player1, battleId);
         sendBattleStartMessage(player2, battleId);
 
-        System.out.println("🎊 Batalha " + battleId + " iniciada!");
+        System.out.println("Batalha " + battleId + " iniciada!");
     }
 
     private void sendWaitingMessage(UserDTO user) {
