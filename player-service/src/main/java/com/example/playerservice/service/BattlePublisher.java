@@ -1,5 +1,6 @@
 package com.example.playerservice.service;
 
+import com.example.playerservice.config.RabbitMQConfig;
 import com.example.playerservice.dto.BattleMessage;
 import com.example.playerservice.dto.PokemonDTO;
 import com.example.playerservice.dto.UserDTO;
@@ -47,5 +48,10 @@ public class BattlePublisher {
                 .toList());
 
         return userDTO;
+    }
+
+    public void sendBattleAction(BattleMessage message) {
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_REQUEST_QUEUE, message);
+        System.out.println("[PLAYER] Battle action enviado: " + message.getType() + " - " + message.getUser().getName());
     }
 }

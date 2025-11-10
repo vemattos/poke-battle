@@ -23,7 +23,7 @@ public class BattleConsumer {
             case LOGIN:
                 battleService.handlePlayerLogin(message.getUser());
                 break;
-            case BATTLE_ACTION:
+            case PLAYER_ACTION:
                 battleService.handleBattleAction(message);
                 break;
             default:

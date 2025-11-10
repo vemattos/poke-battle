@@ -50,4 +50,19 @@ public class Pokemon {
 
     public int getDefense() { return defense; }
     public void setDefense(int defense) { this.defense = defense; }
+
+    @Transient
+    private int currentHp;
+
+    public void prepareForBattle() {
+        this.currentHp = this.hp;
+    }
+
+    public int getCurrentHp() {
+        return currentHp > 0 ? currentHp : hp;
+    }
+
+    public boolean isFainted() {
+        return currentHp <= 0;
+    }
 }
