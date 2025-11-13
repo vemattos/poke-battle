@@ -42,7 +42,6 @@ public class PokeApiService {
         Pokemon pokemon = new Pokemon();
         pokemon.setName(apiResponse.getName());
         List<String> types = apiResponse.getTypes();
-
         pokemon.setType1(types.size() > 0 ? types.get(0) : null);
         pokemon.setType2(types.size() > 1 ? types.get(1) : null);
         pokemon.setHp(apiResponse.getHp());

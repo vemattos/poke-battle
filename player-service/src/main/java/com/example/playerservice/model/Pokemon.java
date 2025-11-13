@@ -25,10 +25,11 @@ public class Pokemon {
 
     public Pokemon() {}
 
-    public Pokemon(int id, String name, String type, int hp, int attack, int defense) {
+    public Pokemon(int id, String name, String type1, String type2, int hp, int attack, int defense) {
         this.id = id;
         this.name = name;
-        this.type = type;
+        this.type1 = type1;
+        this.type2 = type2;
         this.hp = hp;
         this.attack = attack;
         this.defense = defense;

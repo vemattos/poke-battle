@@ -38,7 +38,8 @@ public class BattlePublisher {
                     PokemonDTO pokemonDTO = new PokemonDTO();
                     pokemonDTO.setId(pokemon.getId());
                     pokemonDTO.setName(pokemon.getName());
-                    pokemonDTO.setType(pokemon.getType());
+                    pokemonDTO.setType1(pokemon.getType1());
+                    pokemonDTO.setType2(pokemon.getType2());
                     pokemonDTO.setHp(pokemon.getHp());
                     pokemonDTO.setAttack(pokemon.getAttack());
                     pokemonDTO.setDefense(pokemon.getDefense());

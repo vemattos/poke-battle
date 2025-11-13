@@ -34,7 +34,7 @@ public class BattleController {
             message.setType(BattleMessage.MessageType.PLAYER_ACTION);
             message.setUser(convertToDTO(user));
             message.setBattleId(battleId);
-            message.setAction(BattleMessage.BattleAction.ATTACK); // ⭐ Sempre ATTACK
+            message.setAction(BattleMessage.BattleAction.ATTACK);
 
             battlePublisher.sendBattleAction(message);
             return ResponseEntity.ok("Ataque enviado para a batalha " + battleId + "!");
@@ -56,7 +56,8 @@ public class BattleController {
         PokemonDTO dto = new PokemonDTO();
         dto.setId(pokemon.getId());
         dto.setName(pokemon.getName());
-        dto.setType(pokemon.getType());
+        dto.setType1(pokemon.getType1());
+        dto.setType2(pokemon.getType2());
         dto.setHp(pokemon.getHp());
         dto.setAttack(pokemon.getAttack());
         dto.setDefense(pokemon.getDefense());
