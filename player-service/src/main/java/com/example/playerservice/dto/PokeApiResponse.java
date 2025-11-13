@@ -21,7 +21,11 @@ public class PokeApiResponse {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public List<TypeSlot> getTypes() { return types; }
+    public List<String> getTypes() {
+        return types.stream()
+                .map(t -> t.getType().getName())
+                .toList();
+    }
     public void setTypes(List<TypeSlot> types) { this.types = types; }
 
     public List<Stat> getStats() { return stats; }
