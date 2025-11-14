@@ -43,9 +43,20 @@ public class BattleResponseConsumer {
     }
 
     private void handlePlayerAction(BattleMessage message) {
-        System.out.println("    SUA VEZ!");
-        System.out.println("   Batalha: " + message.getBattleId());
-        System.out.println("   Envie: POST /battle/" + message.getUser().getId() + "/attack?battleId=" + message.getBattleId());
+        System.out.println("SUA VEZ!");
+        System.out.println("Batalha: " + message.getBattleId());
+
+        if (message.getBattleLog() != null &&
+                (message.getBattleLog().contains("ERRO") ||
+                        message.getBattleLog().contains("Nao foi possivel") ||
+                        message.getBattleLog().contains("falhou"))) {
+            System.out.println(message.getBattleLog());
+        }
+
+        System.out.println("Comandos:");
+        System.out.println("- Ataque: POST /battle/" + message.getUser().getId() + "/attack?battleId=" + message.getBattleId());
+        System.out.println("- Trocar: POST /battle/" + message.getUser().getId() + "/switch?battleId=" + message.getBattleId() + "&pokemonIndex=0");
+        System.out.println("- Ver time: GET /battle/" + message.getUser().getId() + "/team");
     }
 
     private void handleTurnResult(BattleMessage message) {
@@ -62,5 +73,6 @@ public class BattleResponseConsumer {
         System.out.println("   BATALHA TERMINOU!");
         System.out.println("   Vencedor: " + (message.getOpponentName() != null ? message.getOpponentName() : "User " + message.getFrom()));
         System.out.println("   ID: " + message.getBattleId());
+        System.out.println("   A batalha terminou. Não envie mais ações.");
     }
 }

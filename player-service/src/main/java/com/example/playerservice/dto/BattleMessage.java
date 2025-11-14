@@ -8,7 +8,7 @@ public class BattleMessage {
     private UserDTO user;
     private String battleId;
     private String opponentName;
-
+    private Integer target;
     private BattleAction action;
     private Integer damage;
     private String battleLog;
@@ -17,7 +17,7 @@ public class BattleMessage {
     }
 
     public BattleMessage(MessageType type, String from, String to, UserDTO user,
-                         String battleId, String opponentName,
+                         String battleId, String opponentName, Integer target,
                          BattleAction action, Integer damage, String battleLog) {
         this.type = type;
         this.from = from;
@@ -25,6 +25,7 @@ public class BattleMessage {
         this.user = user;
         this.battleId = battleId;
         this.opponentName = opponentName;
+        this.target = target;
         this.action = action;
         this.damage = damage;
         this.battleLog = battleLog;
@@ -102,15 +103,19 @@ public class BattleMessage {
         this.battleLog = battleLog;
     }
 
+    public Integer getTarget(){
+        return target;
+    }
+
+    public void setTarget(Integer target){
+        this.target = target;
+    }
+
     public enum MessageType {
-        LOGIN,
-        BATTLE_START,
-        PLAYER_ACTION,
-        TURN_RESULT,
-        BATTLE_END
+        LOGIN, BATTLE_START, PLAYER_ACTION, TURN_RESULT, BATTLE_END, BATTLE_STATE
     }
 
     public enum BattleAction {
-        ATTACK
+        ATTACK, SWITCH_POKEMON
     }
 }

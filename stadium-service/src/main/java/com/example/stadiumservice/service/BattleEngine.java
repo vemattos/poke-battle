@@ -3,6 +3,7 @@ package com.example.stadiumservice.service;
 import com.example.stadiumservice.dto.PokemonDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.util.Map;
 
@@ -43,6 +44,7 @@ public class BattleEngine {
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class BattleResult {
         private int damage;
         private String log;

@@ -10,6 +10,7 @@ import com.example.playerservice.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
@@ -18,6 +19,7 @@ public class BattleController {
 
     private final BattlePublisher battlePublisher;
     private final UserService userService;
+
 
     public BattleController(BattlePublisher battlePublisher, UserService userService) {
         this.battlePublisher = battlePublisher;
@@ -34,13 +36,62 @@ public class BattleController {
             message.setType(BattleMessage.MessageType.PLAYER_ACTION);
             message.setUser(convertToDTO(user));
             message.setBattleId(battleId);
-            message.setAction(BattleMessage.BattleAction.ATTACK); // ⭐ Sempre ATTACK
+            message.setAction(BattleMessage.BattleAction.ATTACK);
 
             battlePublisher.sendBattleAction(message);
             return ResponseEntity.ok("Ataque enviado para a batalha " + battleId + "!");
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{userId}/switch")
+    public ResponseEntity<String> switchPokemon(
+            @PathVariable int userId,
+            @RequestParam String battleId,
+            @RequestParam int pokemonIndex) {
+
+        return sendBattleAction(userId, battleId, BattleMessage.BattleAction.SWITCH_POKEMON, pokemonIndex);
+    }
+
+    private ResponseEntity<String> sendBattleAction(int userId, String battleId,
+                                                    BattleMessage.BattleAction action, Integer target) {
+        try {
+            User user = userService.getUserById(userId)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+            BattleMessage message = new BattleMessage();
+            message.setType(BattleMessage.MessageType.PLAYER_ACTION);
+            message.setUser(convertToDTO(user));
+            message.setBattleId(battleId);
+            message.setAction(action);
+            message.setTarget(target);
+
+            battlePublisher.sendBattleAction(message);
+
+            String actionText = action == BattleMessage.BattleAction.ATTACK ? "Ataque" : "Troca de Pokémon";
+            return ResponseEntity.ok(actionText + " enviado para a batalha " + battleId + "!");
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{userId}/team")
+    public ResponseEntity<List<PokemonDTO>> getUserTeam(@PathVariable int userId) {
+        try {
+            User user = userService.getUserById(userId)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+            List<PokemonDTO> team = user.getTeam().stream()
+                    .map(this::convertPokemonToDTO)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(team);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 

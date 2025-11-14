@@ -45,4 +45,8 @@ public class PokemonDTO {
 
     public int getCurrentHp() { return currentHp; }
     public void setCurrentHp(int currentHp) { this.currentHp = currentHp; }
+
+    public boolean isFainted() {
+        return this.currentHp <= 0;
+    }
 }
