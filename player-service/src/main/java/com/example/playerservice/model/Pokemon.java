@@ -1,13 +1,5 @@
 package com.example.playerservice.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import jakarta.persistence.*;
 
 @Entity
@@ -22,10 +14,12 @@ public class Pokemon {
     private int hp;
     private int attack;
     private int defense;
+    private String frontSprite;
+    private String backSprite;
 
     public Pokemon() {}
 
-    public Pokemon(int id, String name, String type1, String type2, int hp, int attack, int defense) {
+    public Pokemon(int id, String name, String type1, String type2, int hp, int attack, int defense, String frontSprite, String backSprite) {
         this.id = id;
         this.name = name;
         this.type1 = type1;
@@ -33,6 +27,8 @@ public class Pokemon {
         this.hp = hp;
         this.attack = attack;
         this.defense = defense;
+        this.frontSprite = frontSprite;
+        this.backSprite = backSprite;
     }
 
     public int getId() { return id; }
@@ -55,6 +51,12 @@ public class Pokemon {
 
     public int getDefense() { return defense; }
     public void setDefense(int defense) { this.defense = defense; }
+
+    public String getFrontSprite() { return frontSprite; }
+    public void setFrontSprite(String frontSprite) { this.frontSprite = frontSprite; }
+
+    public String getBackSprite() { return backSprite; }
+    public void setBackSprite(String backSprite) { this.backSprite = backSprite; }
 
     @Transient
     private int currentHp;

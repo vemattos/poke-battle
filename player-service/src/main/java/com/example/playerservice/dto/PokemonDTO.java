@@ -13,10 +13,12 @@ public class PokemonDTO {
     private int attack;
     private int defense;
     private int currentHp;
+    private String frontSprite;
+    private String backSprite;
 
     public PokemonDTO() {}
 
-    public PokemonDTO(int id, String name, String type, int hp, int attack, int defense, int currentHp) {
+    public PokemonDTO(int id, String name, String type, int hp, int attack, int defense, int currentHp, String frontSprite, String backSprite) {
         this.id = id;
         this.name = name;
         this.type1 = type1;
@@ -25,6 +27,8 @@ public class PokemonDTO {
         this.attack = attack;
         this.defense = defense;
         this.currentHp = currentHp;
+        this.frontSprite = frontSprite;
+        this.backSprite = backSprite;
     }
 
     public int getId() { return id; }
@@ -50,4 +54,10 @@ public class PokemonDTO {
 
     public int getCurrentHp() { return currentHp; }
     public void setCurrentHp(int currentHp) { this.currentHp = currentHp; }
+
+    public String getFrontSprite() { return frontSprite; }
+    public void setFrontSprite(String frontSprite) { this.frontSprite = frontSprite; }
+
+    public String getBackSprite() { return backSprite; }
+    public void setBackSprite(String backSprite) { this.backSprite = backSprite; }
 }

@@ -47,6 +47,8 @@ public class PokeApiService {
         pokemon.setHp(apiResponse.getHp());
         pokemon.setAttack(apiResponse.getAttack());
         pokemon.setDefense(apiResponse.getDefense());
+        pokemon.setBackSprite(apiResponse.getSprites().getBackDefault());
+        pokemon.setFrontSprite(apiResponse.getSprites().getFrontDefault());
         return pokemon;
     }
 }
