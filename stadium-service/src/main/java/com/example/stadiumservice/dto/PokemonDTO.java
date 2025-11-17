@@ -15,4 +15,7 @@ public class PokemonDTO {
     private int attack;
     private int defense;
     private int currentHp;
+    public boolean isFainted() {
+        return this.currentHp <= 0;
+    }
 }
