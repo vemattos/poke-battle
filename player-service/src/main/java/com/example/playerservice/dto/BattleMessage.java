@@ -116,6 +116,6 @@ public class BattleMessage {
     }
 
     public enum BattleAction {
-        ATTACK, SWITCH_POKEMON
+        ATTACK, SWITCH_POKEMON, FLEE
     }
 }

@@ -95,6 +95,11 @@ public class BattleController {
         }
     }
 
+    @PostMapping("/{userId}/flee")
+    public ResponseEntity<String> flee(@PathVariable int userId, @RequestParam String battleId) {
+        return sendBattleAction(userId, battleId, BattleMessage.BattleAction.FLEE, null);
+    }
+
     private UserDTO convertToDTO(User user) {
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getId());

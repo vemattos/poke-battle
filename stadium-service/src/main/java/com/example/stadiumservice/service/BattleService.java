@@ -57,6 +57,11 @@ public class BattleService {
 
         System.out.println("Ação recebida de " + message.getUser().getName() + ": " + message.getAction());
 
+        if (message.getAction() == BattleMessage.BattleAction.FLEE) {
+            handlePlayerFlee(battle, playerId);
+            return;
+        }
+
         if (message.getAction() == BattleMessage.BattleAction.SWITCH_POKEMON && message.getTarget() != null) {
             boolean switchSuccess = handlePokemonSwitch(battle, playerId, message.getTarget());
             if (switchSuccess) {
@@ -110,6 +115,9 @@ public class BattleService {
     private void processTurn(BattleSession battle) {
         System.out.println("Processando turno: " + battle.getBattleId());
 
+        System.out.println("DEBUG - Pokemon ativo Player 1: " + battle.getCurrentPokemon1().getName());
+        System.out.println("DEBUG - Pokemon ativo Player 2: " + battle.getCurrentPokemon2().getName());
+
         System.out.println("HP Antes - " + battle.getCurrentPokemon1().getName() + ": " +
                 battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
         System.out.println("HP Antes - " + battle.getCurrentPokemon2().getName() + ": " +
@@ -118,52 +126,19 @@ public class BattleService {
         BattleMessage.BattleAction action1 = battle.getPendingActions().get(String.valueOf(battle.getPlayer1().getId()));
         BattleMessage.BattleAction action2 = battle.getPendingActions().get(String.valueOf(battle.getPlayer2().getId()));
 
-        BattleEngine.BattleResult result1 = new BattleEngine.BattleResult(0, battle.getPlayer1().getName() + " agiu.");
-        BattleEngine.BattleResult result2 = new BattleEngine.BattleResult(0, battle.getPlayer2().getName() + " agiu.");
-
-        if (action1 == BattleMessage.BattleAction.ATTACK && action2 == BattleMessage.BattleAction.ATTACK) {
-            result1 = battleEngine.calculateBattle(battle.getCurrentPokemon1(), battle.getCurrentPokemon2());
-            result2 = battleEngine.calculateBattle(battle.getCurrentPokemon2(), battle.getCurrentPokemon1());
-
-            battle.getCurrentPokemon2().setCurrentHp(battle.getCurrentPokemon2().getCurrentHp() - result1.getDamage());
-            battle.getCurrentPokemon1().setCurrentHp(battle.getCurrentPokemon1().getCurrentHp() - result2.getDamage());
-
-        } else if (action1 == BattleMessage.BattleAction.SWITCH_POKEMON) {
-            result1 = new BattleEngine.BattleResult(0, battle.getPlayer1().getName() + " trocou para " + battle.getCurrentPokemon1().getName() + "!");
-            if (action2 == BattleMessage.BattleAction.ATTACK) {
-                result2 = battleEngine.calculateBattle(battle.getCurrentPokemon2(), battle.getCurrentPokemon1());
-                battle.getCurrentPokemon1().setCurrentHp(battle.getCurrentPokemon1().getCurrentHp() - result2.getDamage());
-            } else {
-                result2 = new BattleEngine.BattleResult(0, battle.getPlayer2().getName() + " também trocou de Pokemon!");
+        if (battle.getCurrentTurn().equals("player1")) {
+            processPlayerAction(battle, action1, true);
+            if (!battle.getCurrentPokemon2().isFainted()) {
+                processPlayerAction(battle, action2, false);
             }
-
-        } else if (action2 == BattleMessage.BattleAction.SWITCH_POKEMON) {
-            result2 = new BattleEngine.BattleResult(0, battle.getPlayer2().getName() + " trocou para " + battle.getCurrentPokemon2().getName() + "!");
-            if (action1 == BattleMessage.BattleAction.ATTACK) {
-                result1 = battleEngine.calculateBattle(battle.getCurrentPokemon1(), battle.getCurrentPokemon2());
-                battle.getCurrentPokemon2().setCurrentHp(battle.getCurrentPokemon2().getCurrentHp() - result1.getDamage());
-            } else {
-                result1 = new BattleEngine.BattleResult(0, battle.getPlayer1().getName() + " também trocou de Pokemon!");
+        } else {
+            processPlayerAction(battle, action2, false);
+            if (!battle.getCurrentPokemon1().isFainted()) {
+                processPlayerAction(battle, action1, true);
             }
         }
 
-        if (battle.getCurrentPokemon1().isFainted()) {
-            System.out.println(battle.getCurrentPokemon1().getName() + " desmaiou! Procurando substituto...");
-            boolean switched = autoSwitchPokemon(battle, battle.getPlayer1(), true);
-            if (!switched) {
-                System.out.println(battle.getPlayer1().getName() + " não tem mais Pokemon!");
-            }
-        }
-
-        if (battle.getCurrentPokemon2().isFainted()) {
-            System.out.println(battle.getCurrentPokemon2().getName() + " desmaiou! Procurando substituto...");
-            boolean switched = autoSwitchPokemon(battle, battle.getPlayer2(), false);
-            if (!switched) {
-                System.out.println(battle.getPlayer2().getName() + " não tem mais Pokemon!");
-            }
-        }
-
-        sendTurnResult(battle, result1, result2);
+        checkAutoSwitch(battle);
 
         checkBattleEnd(battle);
 
@@ -179,6 +154,44 @@ public class BattleService {
                 battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
         System.out.println("HP Depois - " + battle.getCurrentPokemon2().getName() + ": " +
                 battle.getCurrentPokemon2().getCurrentHp() + "/" + battle.getCurrentPokemon2().getHp());
+    }
+
+    private void processPlayerAction(BattleSession battle, BattleMessage.BattleAction action, boolean isPlayer1) {
+        PokemonDTO attacker = isPlayer1 ? battle.getCurrentPokemon1() : battle.getCurrentPokemon2();
+        PokemonDTO defender = isPlayer1 ? battle.getCurrentPokemon2() : battle.getCurrentPokemon1();
+        UserDTO player = isPlayer1 ? battle.getPlayer1() : battle.getPlayer2();
+
+        BattleEngine.BattleResult result = new BattleEngine.BattleResult(0, player.getName() + " agiu.");
+
+        if (action == BattleMessage.BattleAction.ATTACK) {
+            result = battleEngine.calculateBattle(attacker, defender);
+            defender.setCurrentHp(defender.getCurrentHp() - result.getDamage());
+            System.out.println(player.getName() + " atacou! " + result.getLog());
+
+        } else if (action == BattleMessage.BattleAction.SWITCH_POKEMON) {
+            result = new BattleEngine.BattleResult(0, player.getName() + " trocou para " + attacker.getName() + "!");
+            System.out.println(result.getLog());
+        }
+
+        sendIndividualTurnResult(battle, String.valueOf(player.getId()), result.getDamage(), result.getLog());
+    }
+
+    private void checkAutoSwitch(BattleSession battle) {
+        if (battle.getCurrentPokemon1().isFainted()) {
+            System.out.println(battle.getCurrentPokemon1().getName() + " desmaiou! Procurando substituto...");
+            boolean switched = autoSwitchPokemon(battle, battle.getPlayer1(), true);
+            if (!switched) {
+                System.out.println(battle.getPlayer1().getName() + " não tem mais Pokemon!");
+            }
+        }
+
+        if (battle.getCurrentPokemon2().isFainted()) {
+            System.out.println(battle.getCurrentPokemon2().getName() + " desmaiou! Procurando substituto...");
+            boolean switched = autoSwitchPokemon(battle, battle.getPlayer2(), false);
+            if (!switched) {
+                System.out.println(battle.getPlayer2().getName() + " não tem mais Pokemon!");
+            }
+        }
     }
 
     private void checkBattleEnd(BattleSession battle) {
@@ -321,5 +334,49 @@ public class BattleService {
             }
         }
         return false;
+    }
+
+    private void handlePlayerFlee(BattleSession battle, String playerId) {
+        System.out.println(battle.getPlayer(playerId).getName() + " fugiu da batalha!");
+
+        boolean isPlayer1 = String.valueOf(battle.getPlayer1().getId()).equals(playerId);
+        String winnerId = isPlayer1 ? String.valueOf(battle.getPlayer2().getId()) : String.valueOf(battle.getPlayer1().getId());
+        String winnerName = isPlayer1 ? battle.getPlayer2().getName() : battle.getPlayer1().getName();
+        String fleerName = isPlayer1 ? battle.getPlayer1().getName() : battle.getPlayer2().getName();
+
+        battle.setBattleEnded(true);
+
+        sendFleeResult(battle, winnerId, winnerName, fleerName);
+
+        activeBattles.remove(battle.getBattleId());
+    }
+
+    private void sendFleeResult(BattleSession battle, String winnerId, String winnerName, String fleerName) {
+        sendIndividualFleeResult(battle, fleerName.equals(battle.getPlayer1().getName()) ?
+                        String.valueOf(battle.getPlayer1().getId()) : String.valueOf(battle.getPlayer2().getId()),
+                winnerName, true);
+
+        sendIndividualFleeResult(battle, winnerId, fleerName, false);
+    }
+
+    private void sendIndividualFleeResult(BattleSession battle, String playerId, String otherPlayerName, boolean isFleer) {
+        UserDTO player = battle.getPlayer(playerId);
+        BattleMessage message = new BattleMessage();
+        message.setType(BattleMessage.MessageType.BATTLE_END);
+        message.setUser(player);
+        message.setBattleId(battle.getBattleId());
+
+        if (isFleer) {
+            message.setFrom(String.valueOf(battle.getPlayer(playerId).getId()));
+            message.setBattleLog("Voce fugiu da batalha! " + otherPlayerName + " venceu!");
+        } else {
+            message.setFrom(playerId);
+            message.setBattleLog(otherPlayerName + " fugiu da batalha! Voce venceu!");
+        }
+
+        message.setOpponentName(otherPlayerName);
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
+        System.out.println("Resultado de fuga enviado para: " + player.getName());
     }
 }
