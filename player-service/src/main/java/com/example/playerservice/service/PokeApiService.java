@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
 @Service
 public class PokeApiService {
 
@@ -39,10 +41,15 @@ public class PokeApiService {
     public Pokemon convertToPokemonEntity(PokeApiResponse apiResponse) {
         Pokemon pokemon = new Pokemon();
         pokemon.setName(apiResponse.getName());
-        pokemon.setType(apiResponse.getPrimaryType());
+        List<String> types = apiResponse.getTypes();
+
+        pokemon.setType1(types.size() > 0 ? types.get(0) : null);
+        pokemon.setType2(types.size() > 1 ? types.get(1) : null);
         pokemon.setHp(apiResponse.getHp());
         pokemon.setAttack(apiResponse.getAttack());
         pokemon.setDefense(apiResponse.getDefense());
+        pokemon.setBackSprite(apiResponse.getSprites().getBackDefault());
+        pokemon.setFrontSprite(apiResponse.getSprites().getFrontDefault());
         return pokemon;
     }
 }

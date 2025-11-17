@@ -115,6 +115,13 @@ public class BattleService {
     private void processTurn(BattleSession battle) {
         System.out.println("Processando turno: " + battle.getBattleId());
 
+        if (battle.getCurrentPokemon1() == null || battle.getCurrentPokemon2() == null) {
+            System.out.println("ERRO: Pokemon atual é null! Encerrando batalha.");
+            handleBattleError(battle, "Erro: Pokemon não encontrado");
+            return;
+        }
+
+
         System.out.println("DEBUG - Pokemon ativo Player 1: " + battle.getCurrentPokemon1().getName());
         System.out.println("DEBUG - Pokemon ativo Player 2: " + battle.getCurrentPokemon2().getName());
 
@@ -378,5 +385,18 @@ public class BattleService {
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
         System.out.println("Resultado de fuga enviado para: " + player.getName());
+    }
+
+    private void handleBattleError(BattleSession battle, String errorMessage) {
+        System.out.println("Lidando com erro na batalha: " + errorMessage);
+
+        BattleMessage errorMsg = new BattleMessage();
+        errorMsg.setType(BattleMessage.MessageType.BATTLE_END);
+        errorMsg.setBattleId(battle.getBattleId());
+        errorMsg.setBattleLog("ERRO: " + errorMessage + " | Batalha encerrada.");
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, errorMsg);
+
+        activeBattles.remove(battle.getBattleId());
     }
 }

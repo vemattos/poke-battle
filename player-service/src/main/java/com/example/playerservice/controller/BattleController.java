@@ -112,7 +112,8 @@ public class BattleController {
         PokemonDTO dto = new PokemonDTO();
         dto.setId(pokemon.getId());
         dto.setName(pokemon.getName());
-        dto.setType(pokemon.getType());
+        dto.setType1(pokemon.getType1());
+        dto.setType2(pokemon.getType2());
         dto.setHp(pokemon.getHp());
         dto.setAttack(pokemon.getAttack());
         dto.setDefense(pokemon.getDefense());
