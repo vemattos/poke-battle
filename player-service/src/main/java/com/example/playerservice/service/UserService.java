@@ -24,7 +24,7 @@ public class UserService {
 
     public User createUser(String name) {
         if (userRepository.existsByName(name)) {
-            throw new RuntimeException("Usuário com nome '" + name + "' já existe");
+            return getUserByName(name);
         }
 
         User user = new User();
@@ -47,7 +47,7 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public Optional<User> getUserByName(String name) {
+    public User getUserByName(String name) {
         return userRepository.findByName(name);
     }
 
