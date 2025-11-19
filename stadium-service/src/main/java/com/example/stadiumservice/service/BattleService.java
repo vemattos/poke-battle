@@ -3,39 +3,74 @@ package com.example.stadiumservice.service;
 import com.example.stadiumservice.config.RabbitMQConfig;
 import com.example.stadiumservice.dto.BattleMessage;
 import com.example.stadiumservice.dto.PokemonDTO;
+import com.example.stadiumservice.dto.Stadium;
 import com.example.stadiumservice.dto.UserDTO;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 @Service
 public class BattleService {
 
     private final RabbitTemplate rabbitTemplate;
     private final BattleEngine battleEngine;
+    private final Stadium stadium;
     private final ConcurrentLinkedQueue<UserDTO> waitingPlayers = new ConcurrentLinkedQueue<>();
     private final ConcurrentHashMap<String, BattleSession> activeBattles = new ConcurrentHashMap<>();
 
-    public BattleService(RabbitTemplate rabbitTemplate, BattleEngine battleEngine) {
+    public BattleService(RabbitTemplate rabbitTemplate, BattleEngine battleEngine, Stadium stadium) {
         this.rabbitTemplate = rabbitTemplate;
         this.battleEngine = battleEngine;
+        this.stadium = stadium;
+    }
+
+    public Stadium getStadium() {
+        return stadium;
+    }
+
+    public List<UserDTO> getWaitingPlayers() {
+        return new ArrayList<>(waitingPlayers);
+    }
+
+    public int getWaitingPlayersCount() {
+        return waitingPlayers.size();
+    }
+
+    public int getActiveBattlesCount() {
+        return activeBattles.size();
+    }
+
+    public List<com.example.stadiumservice.dto.BattleInfo> getActiveBattles() {
+        return activeBattles.entrySet().stream()
+                .map(entry -> {
+                    BattleSession battle = entry.getValue();
+                    return new com.example.stadiumservice.dto.BattleInfo(
+                            entry.getKey(),
+                            battle.getPlayer1(),
+                            battle.getPlayer2(),
+                            "active"
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     public void handlePlayerLogin(UserDTO user) {
-        System.out.println("Jogador " + user.getName() + " entrou no stadium");
+        System.out.println("Jogador " + user.getName() + " entrou no " + stadium.getName());
 
         if (waitingPlayers.isEmpty()) {
             waitingPlayers.offer(user);
-            System.out.println(user.getName() + " esperando oponente...");
+            System.out.println(user.getName() + " esperando oponente no " + stadium.getName() + "...");
             sendWaitingResponse(user);
         } else {
             UserDTO player1 = waitingPlayers.poll();
             UserDTO player2 = user;
 
-            System.out.println("Batalha encontrada: " + player1.getName() + " vs " + player2.getName());
+            System.out.println("Batalha encontrada no " + stadium.getName() + ": " + player1.getName() + " vs " + player2.getName());
             startBattle(player1, player2);
         }
     }
@@ -99,12 +134,12 @@ public class BattleService {
     }
 
     private void startBattle(UserDTO player1, UserDTO player2) {
-        String battleId = "battle-" + System.currentTimeMillis();
+        String battleId = "battle-" + System.currentTimeMillis() + "-" + stadium.name().toLowerCase();
 
         BattleSession battle = new BattleSession(battleId, player1, player2);
         activeBattles.put(battleId, battle);
 
-        System.out.println("Batalha " + battleId + " iniciada!");
+        System.out.println("Batalha " + battleId + " iniciada no " + stadium.getName() + "!");
 
         sendBattleStartResponse(player1, battleId, player2.getName());
         sendBattleStartResponse(player2, battleId, player1.getName());
@@ -113,54 +148,60 @@ public class BattleService {
     }
 
     private void processTurn(BattleSession battle) {
-        System.out.println("Processando turno: " + battle.getBattleId());
+        try {
+            System.out.println("Processando turno no " + stadium.getName() + ": " + battle.getBattleId());
 
-        if (battle.getCurrentPokemon1() == null || battle.getCurrentPokemon2() == null) {
-            System.out.println("ERRO: Pokemon atual é null! Encerrando batalha.");
-            handleBattleError(battle, "Erro: Pokemon não encontrado");
-            return;
-        }
-
-
-        System.out.println("DEBUG - Pokemon ativo Player 1: " + battle.getCurrentPokemon1().getName());
-        System.out.println("DEBUG - Pokemon ativo Player 2: " + battle.getCurrentPokemon2().getName());
-
-        System.out.println("HP Antes - " + battle.getCurrentPokemon1().getName() + ": " +
-                battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
-        System.out.println("HP Antes - " + battle.getCurrentPokemon2().getName() + ": " +
-                battle.getCurrentPokemon2().getCurrentHp() + "/" + battle.getCurrentPokemon2().getHp());
-
-        BattleMessage.BattleAction action1 = battle.getPendingActions().get(String.valueOf(battle.getPlayer1().getId()));
-        BattleMessage.BattleAction action2 = battle.getPendingActions().get(String.valueOf(battle.getPlayer2().getId()));
-
-        if (battle.getCurrentTurn().equals("player1")) {
-            processPlayerAction(battle, action1, true);
-            if (!battle.getCurrentPokemon2().isFainted()) {
-                processPlayerAction(battle, action2, false);
+            if (battle.getCurrentPokemon1() == null || battle.getCurrentPokemon2() == null) {
+                System.out.println("ERRO: Pokemon atual é null! Encerrando batalha.");
+                handleBattleError(battle, "Erro: Pokemon não encontrado");
+                return;
             }
-        } else {
-            processPlayerAction(battle, action2, false);
-            if (!battle.getCurrentPokemon1().isFainted()) {
+
+            System.out.println("DEBUG - Pokemon ativo Player 1: " + battle.getCurrentPokemon1().getName());
+            System.out.println("DEBUG - Pokemon ativo Player 2: " + battle.getCurrentPokemon2().getName());
+
+            System.out.println("HP Antes - " + battle.getCurrentPokemon1().getName() + ": " +
+                    battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
+            System.out.println("HP Antes - " + battle.getCurrentPokemon2().getName() + ": " +
+                    battle.getCurrentPokemon2().getCurrentHp() + "/" + battle.getCurrentPokemon2().getHp());
+
+            BattleMessage.BattleAction action1 = battle.getPendingActions().get(String.valueOf(battle.getPlayer1().getId()));
+            BattleMessage.BattleAction action2 = battle.getPendingActions().get(String.valueOf(battle.getPlayer2().getId()));
+
+            if (battle.getCurrentTurn().equals("player1")) {
                 processPlayerAction(battle, action1, true);
+                if (!battle.getCurrentPokemon2().isFainted()) {
+                    processPlayerAction(battle, action2, false);
+                }
+            } else {
+                processPlayerAction(battle, action2, false);
+                if (!battle.getCurrentPokemon1().isFainted()) {
+                    processPlayerAction(battle, action1, true);
+                }
             }
+
+            checkAutoSwitch(battle);
+
+            checkBattleEnd(battle);
+
+            battle.clearPendingActions();
+            battle.switchTurn();
+
+            if (!battle.isBattleEnded()) {
+                sendPlayerActionRequest(battle, battle.getCurrentTurn().equals("player1") ?
+                        String.valueOf(battle.getPlayer1().getId()) : String.valueOf(battle.getPlayer2().getId()));
+            }
+
+            System.out.println("HP Depois - " + battle.getCurrentPokemon1().getName() + ": " +
+                    battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
+            System.out.println("HP Depois - " + battle.getCurrentPokemon2().getName() + ": " +
+                    battle.getCurrentPokemon2().getCurrentHp() + "/" + battle.getCurrentPokemon2().getHp());
+
+        } catch (Exception e) {
+            System.out.println("ERRO CRITICO no processTurn: " + e.getMessage());
+            e.printStackTrace();
+            handleBattleError(battle, "Erro no processamento do turno: " + e.getMessage());
         }
-
-        checkAutoSwitch(battle);
-
-        checkBattleEnd(battle);
-
-        battle.clearPendingActions();
-        battle.switchTurn();
-
-        if (!battle.isBattleEnded()) {
-            sendPlayerActionRequest(battle, battle.getCurrentTurn().equals("player1") ?
-                    String.valueOf(battle.getPlayer1().getId()) : String.valueOf(battle.getPlayer2().getId()));
-        }
-
-        System.out.println("HP Depois - " + battle.getCurrentPokemon1().getName() + ": " +
-                battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
-        System.out.println("HP Depois - " + battle.getCurrentPokemon2().getName() + ": " +
-                battle.getCurrentPokemon2().getCurrentHp() + "/" + battle.getCurrentPokemon2().getHp());
     }
 
     private void processPlayerAction(BattleSession battle, BattleMessage.BattleAction action, boolean isPlayer1) {
@@ -241,6 +282,7 @@ public class BattleService {
         message.setType(BattleMessage.MessageType.PLAYER_ACTION);
         message.setUser(player);
         message.setBattleId(battle.getBattleId());
+        message.setStadium(stadium);
         message.setBattleLog("ERRO: Nao foi possivel trocar de Pokemon! Tente outro.");
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
@@ -251,6 +293,7 @@ public class BattleService {
         BattleMessage message = new BattleMessage();
         message.setType(BattleMessage.MessageType.LOGIN);
         message.setUser(user);
+        message.setStadium(stadium);
         message.setBattleId("waiting");
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
@@ -262,6 +305,7 @@ public class BattleService {
         message.setUser(user);
         message.setBattleId(battleId);
         message.setOpponentName(opponentName);
+        message.setStadium(stadium);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
     }
@@ -272,6 +316,7 @@ public class BattleService {
         message.setType(BattleMessage.MessageType.PLAYER_ACTION);
         message.setUser(player);
         message.setBattleId(battle.getBattleId());
+        message.setStadium(stadium);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
         System.out.println("Solicitando ação de: " + player.getName());
@@ -283,6 +328,7 @@ public class BattleService {
         message.setType(BattleMessage.MessageType.PLAYER_ACTION);
         message.setUser(player);
         message.setBattleId(battle.getBattleId());
+        message.setStadium(stadium);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
         System.out.println("Aguardando oponente para: " + player.getName());
@@ -302,6 +348,7 @@ public class BattleService {
         message.setType(BattleMessage.MessageType.TURN_RESULT);
         message.setUser(player);
         message.setBattleId(battle.getBattleId());
+        message.setStadium(stadium);
         message.setDamage(damage);
         message.setBattleLog(log);
 
@@ -320,6 +367,7 @@ public class BattleService {
         message.setType(BattleMessage.MessageType.BATTLE_END);
         message.setUser(player);
         message.setBattleId(battle.getBattleId());
+        message.setStadium(stadium);
         message.setFrom(winnerId);
         message.setOpponentName(winnerName);
 
@@ -372,6 +420,7 @@ public class BattleService {
         message.setType(BattleMessage.MessageType.BATTLE_END);
         message.setUser(player);
         message.setBattleId(battle.getBattleId());
+        message.setStadium(stadium);
 
         if (isFleer) {
             message.setFrom(String.valueOf(battle.getPlayer(playerId).getId()));
@@ -393,10 +442,96 @@ public class BattleService {
         BattleMessage errorMsg = new BattleMessage();
         errorMsg.setType(BattleMessage.MessageType.BATTLE_END);
         errorMsg.setBattleId(battle.getBattleId());
+        errorMsg.setStadium(stadium);
         errorMsg.setBattleLog("ERRO: " + errorMessage + " | Batalha encerrada.");
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, errorMsg);
 
         activeBattles.remove(battle.getBattleId());
+    }
+
+    private static class BattleSession {
+        private final String battleId;
+        private final UserDTO player1;
+        private final UserDTO player2;
+        private int currentPokemonIndex1 = 0;
+        private int currentPokemonIndex2 = 0;
+        private String currentTurn = "player1";
+        private final ConcurrentHashMap<String, BattleMessage.BattleAction> pendingActions = new ConcurrentHashMap<>();
+        private boolean battleEnded = false;
+
+        public BattleSession(String battleId, UserDTO player1, UserDTO player2) {
+            this.battleId = battleId;
+            this.player1 = player1;
+            this.player2 = player2;
+
+            player1.getTeam().forEach(pokemon -> {
+                if (pokemon.getCurrentHp() <= 0) pokemon.setCurrentHp(pokemon.getHp());
+            });
+            player2.getTeam().forEach(pokemon -> {
+                if (pokemon.getCurrentHp() <= 0) pokemon.setCurrentHp(pokemon.getHp());
+            });
+        }
+
+        public PokemonDTO getCurrentPokemon1() {
+            return player1.getTeam().get(currentPokemonIndex1);
+        }
+
+        public PokemonDTO getCurrentPokemon2() {
+            return player2.getTeam().get(currentPokemonIndex2);
+        }
+
+        public boolean switchPokemon1(int newIndex) {
+            if (newIndex >= 0 && newIndex < player1.getTeam().size()) {
+                PokemonDTO newPokemon = player1.getTeam().get(newIndex);
+                if (!newPokemon.isFainted() && newIndex != currentPokemonIndex1) {
+                    currentPokemonIndex1 = newIndex;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean switchPokemon2(int newIndex) {
+            if (newIndex >= 0 && newIndex < player2.getTeam().size()) {
+                PokemonDTO newPokemon = player2.getTeam().get(newIndex);
+                if (!newPokemon.isFainted() && newIndex != currentPokemonIndex2) {
+                    currentPokemonIndex2 = newIndex;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public UserDTO getPlayer(String playerId) {
+            if (String.valueOf(player1.getId()).equals(playerId)) return player1;
+            if (String.valueOf(player2.getId()).equals(playerId)) return player2;
+            return null;
+        }
+
+        public void addPendingAction(String playerId, BattleMessage.BattleAction action) {
+            pendingActions.put(playerId, action);
+        }
+
+        public boolean bothPlayersActed() {
+            return pendingActions.containsKey(String.valueOf(player1.getId())) &&
+                    pendingActions.containsKey(String.valueOf(player2.getId()));
+        }
+
+        public void clearPendingActions() {
+            pendingActions.clear();
+        }
+
+        public void switchTurn() {
+            this.currentTurn = this.currentTurn.equals("player1") ? "player2" : "player1";
+        }
+
+        public String getBattleId() { return battleId; }
+        public UserDTO getPlayer1() { return player1; }
+        public UserDTO getPlayer2() { return player2; }
+        public String getCurrentTurn() { return currentTurn; }
+        public boolean isBattleEnded() { return battleEnded; }
+        public void setBattleEnded(boolean battleEnded) { this.battleEnded = battleEnded; }
+        public ConcurrentHashMap<String, BattleMessage.BattleAction> getPendingActions() { return pendingActions; }
     }
 }

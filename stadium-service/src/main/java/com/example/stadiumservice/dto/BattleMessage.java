@@ -7,6 +7,7 @@ public class BattleMessage {
     private UserDTO user;
     private String battleId;
     private String opponentName;
+    private Stadium stadium;
     private Integer target;
     private BattleAction action;
     private Integer damage;
@@ -16,7 +17,7 @@ public class BattleMessage {
     }
 
     public BattleMessage(MessageType type, String from, String to, UserDTO user,
-                         String battleId, String opponentName, Integer target,
+                         String battleId, String opponentName, Stadium stadium, Integer target,
                          BattleAction action, Integer damage, String battleLog) {
         this.type = type;
         this.from = from;
@@ -24,6 +25,7 @@ public class BattleMessage {
         this.user = user;
         this.battleId = battleId;
         this.opponentName = opponentName;
+        this.stadium = stadium;
         this.target = target;
         this.action = action;
         this.damage = damage;
@@ -77,6 +79,10 @@ public class BattleMessage {
     public void setOpponentName(String opponentName) {
         this.opponentName = opponentName;
     }
+
+    public Stadium getStadium() { return stadium; }
+
+    public void setStadium(Stadium stadium) { this.stadium = stadium; }
 
     public BattleAction getAction() {
         return action;

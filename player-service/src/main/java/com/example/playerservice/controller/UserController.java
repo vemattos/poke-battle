@@ -2,6 +2,7 @@ package com.example.playerservice.controller;
 
 import com.example.playerservice.dto.CreateUserRequest;
 import com.example.playerservice.dto.AddPokemonRequest;
+import com.example.playerservice.dto.Stadium;
 import com.example.playerservice.model.User;
 import com.example.playerservice.service.BattlePublisher;
 import com.example.playerservice.service.UserService;
@@ -81,15 +82,28 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/enter-stadium")
-    public ResponseEntity<String> enterStadium(@PathVariable int userId) {
+    public ResponseEntity<StadiumEntryResponse> enterStadium(@PathVariable int userId) {
         try {
             User user = userService.getUserById(userId)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            battlePublisher.sendLoginMessage(user);
-            return ResponseEntity.ok("Usuário " + user.getName() + " entrou no stadium!");
+            Stadium stadium = Stadium.getRandom();
+            battlePublisher.sendLoginMessage(user, stadium);
+
+            StadiumEntryResponse response = new StadiumEntryResponse();
+            response.setSuccess(true);
+            response.setMessage("Usuário " + user.getName() + " entrou no " + stadium.getName());
+            response.setUserId(userId);
+            response.setUserName(user.getName());
+            response.setStadium(stadium.getName());
+
+            return ResponseEntity.ok(response);
+
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            StadiumEntryResponse response = new StadiumEntryResponse();
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

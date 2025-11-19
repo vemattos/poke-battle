@@ -1,44 +1,86 @@
 package com.example.stadiumservice.controller;
 
+import com.example.stadiumservice.dto.Stadium;
 import com.example.stadiumservice.dto.StadiumStatus;
 import com.example.stadiumservice.dto.UserDTO;
-import com.example.stadiumservice.service.BattleService;
+import com.example.stadiumservice.service.StadiumService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/stadium")
+@RequestMapping("/api/stadium")
 public class StadiumController {
 
-    private final BattleService battleService;
+    private final StadiumService stadiumService;
 
-    public StadiumController(BattleService battleService) {
-        this.battleService = battleService;
+    public StadiumController(StadiumService stadiumService) {
+        this.stadiumService = stadiumService;
     }
 
     @GetMapping("/status")
-    public ResponseEntity<StadiumStatus> getStadiumStatus() {
+    public ResponseEntity<Map<Stadium, StadiumStatus>> getAllStadiumsStatus() {
         try {
-            StadiumStatus status = new StadiumStatus();
-            status.setWaitingPlayersCount(battleService.getWaitingPlayersCount());
-            status.setWaitingPlayers(battleService.getWaitingPlayers());
-            status.setActiveBattlesCount(battleService.getActiveBattlesCount());
-            status.setActiveBattles(battleService.getActiveBattles());
-
-            return ResponseEntity.ok(status);
+            Map<Stadium, StadiumStatus> allStatus = stadiumService.getAllStadiumsStatus();
+            return ResponseEntity.ok(allStatus);
         } catch (Exception e) {
             return ResponseEntity.status(500).build();
         }
     }
 
-    @GetMapping("/waiting-opponent")
-    public ResponseEntity<StadiumMatchStatus> checkForOpponent() {
+    @GetMapping("/{stadiumName}/status")
+    public ResponseEntity<StadiumStatus> getStadiumStatus(@PathVariable String stadiumName) {
         try {
+            Stadium stadium = Stadium.valueOf(stadiumName.toUpperCase().replace("-", "_"));
+            StadiumStatus status = stadiumService.getStadiumStatus(stadium);
+            return ResponseEntity.ok(status);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<List<Stadium>> getAvailableStadiums() {
+        try {
+            List<Stadium> stadiums = stadiumService.getAvailableStadiums();
+            return ResponseEntity.ok(stadiums);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/best")
+    public ResponseEntity<Stadium> getBestStadium() {
+        try {
+            Stadium bestStadium = stadiumService.getAvailableStadiums().stream()
+                    .min(Comparator.comparing(stadium ->
+                            stadiumService.getStadiumStatus(stadium).getWaitingPlayersCount()))
+                    .orElse(Stadium.STADIUM_1);
+
+            return ResponseEntity.ok(bestStadium);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/{stadiumName}/waiting-opponent")
+    public ResponseEntity<StadiumMatchStatus> checkForOpponent(@PathVariable String stadiumName) {
+        try {
+            Stadium stadium = Stadium.valueOf(stadiumName.toUpperCase().replace("-", "_"));
+            var battleService = stadiumService.getStadiumService(stadium);
+
+            if (battleService == null) {
+                return ResponseEntity.notFound().build();
+            }
+
             int waitingPlayers = battleService.getWaitingPlayersCount();
 
             StadiumMatchStatus matchStatus = new StadiumMatchStatus();

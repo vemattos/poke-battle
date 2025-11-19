@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StadiumStatus {
+    private Stadium stadium;
     private int waitingPlayersCount;
     private List<UserDTO> waitingPlayers;
     private int activeBattlesCount;
