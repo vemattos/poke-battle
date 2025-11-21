@@ -1,23 +1,35 @@
 package com.example.playerservice.dto;
 
-public enum Stadium {
-    STADIUM_1("Stadium 1", "stadium-1"),
-    STADIUM_2("Stadium 2", "stadium-2"),
-    STADIUM_3("Stadium 3", "stadium-3");
+public class Stadium {
+    private String instanceId;
+    private String name;
+    private String queueName;
+    private int waitingPlayers;
+    private int activeBattles;
 
-    private final String name;
-    private final String queueName;
+    public Stadium() {}
 
-    Stadium(String name, String queueName) {
+    public Stadium(String instanceId, String name, String queueName, int waitingPlayers, int activeBattles) {
+        this.instanceId = instanceId;
         this.name = name;
         this.queueName = queueName;
+        this.waitingPlayers = waitingPlayers;
+        this.activeBattles = activeBattles;
     }
+
+    // Getters e Setters
+    public String getInstanceId() { return instanceId; }
+    public void setInstanceId(String instanceId) { this.instanceId = instanceId; }
 
     public String getName() { return name; }
-    public String getQueueName() { return queueName; }
+    public void setName(String name) { this.name = name; }
 
-    public static Stadium getRandom() {
-        Stadium[] stadiums = values();
-        return stadiums[(int) (Math.random() * stadiums.length)];
-    }
+    public String getQueueName() { return queueName; }
+    public void setQueueName(String queueName) { this.queueName = queueName; }
+
+    public int getWaitingPlayers() { return waitingPlayers; }
+    public void setWaitingPlayers(int waitingPlayers) { this.waitingPlayers = waitingPlayers; }
+
+    public int getActiveBattles() { return activeBattles; }
+    public void setActiveBattles(int activeBattles) { this.activeBattles = activeBattles; }
 }

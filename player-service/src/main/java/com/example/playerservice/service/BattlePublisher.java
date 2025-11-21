@@ -13,41 +13,61 @@ import org.springframework.stereotype.Service;
 public class BattlePublisher {
 
     private final RabbitTemplate rabbitTemplate;
+    private final StadiumDiscoveryService stadiumDiscoveryService;
 
-    public BattlePublisher(RabbitTemplate rabbitTemplate) {
+    public BattlePublisher(RabbitTemplate rabbitTemplate, StadiumDiscoveryService stadiumDiscoveryService) {
         this.rabbitTemplate = rabbitTemplate;
+        this.stadiumDiscoveryService = stadiumDiscoveryService;
     }
 
-    public void sendLoginMessage(User user, Stadium stadium) {
-        UserDTO userDTO = convertToDTO(user);
+    public void sendLoginMessage(User user) {
+        try {
+            // Encontrar o melhor estádio disponível
+            Stadium optimalStadium = stadiumDiscoveryService.getOptimalStadium();
 
-        BattleMessage message = new BattleMessage();
-        message.setType(BattleMessage.MessageType.LOGIN);
-        message.setUser(userDTO);
-        message.setStadium(stadium);
+            UserDTO userDTO = convertToDTO(user);
 
-        String queueName = getStadiumQueueName(stadium);
-        rabbitTemplate.convertAndSend(queueName, message);
-        System.out.println("    Login enviado para " + stadium.getName() + " (" + queueName + "): " + user.getName());
+            BattleMessage message = new BattleMessage();
+            message.setType(BattleMessage.MessageType.LOGIN);
+            message.setUser(userDTO);
+            message.setInstanceId(optimalStadium.getInstanceId()); // ✅ Nova linha
+
+            String queueName = optimalStadium.getQueueName();
+            rabbitTemplate.convertAndSend(queueName, message);
+
+            System.out.println("🎯 Login enviado para " + optimalStadium.getName() +
+                    " (Instância: " + optimalStadium.getInstanceId() + ")");
+            System.out.println("   👤 Jogador: " + user.getName());
+            System.out.println("   📊 Estatísticas: " + optimalStadium.getWaitingPlayers() +
+                    " esperando, " + optimalStadium.getActiveBattles() + " batalhas ativas");
+
+        } catch (Exception e) {
+            System.out.println("❌ Erro ao enviar login: " + e.getMessage());
+            throw new RuntimeException("Não foi possível conectar a um stadium service", e);
+        }
     }
 
     public void sendBattleAction(BattleMessage message) {
-        Stadium stadium = message.getStadium();
-        String queueName = getStadiumQueueName(stadium);
+        try {
+            String instanceId = message.getInstanceId();
+            if (instanceId == null) {
+                throw new RuntimeException("InstanceId não especificado na mensagem");
+            }
 
-        rabbitTemplate.convertAndSend(queueName, message);
-        System.out.println("    Ação enviada para " + stadium.getName() + ": " + message.getType() + " - " + message.getUser().getName());
+            String queueName = "battle.request.queue.stadium-" + instanceId;
+            rabbitTemplate.convertAndSend(queueName, message);
+
+            System.out.println("🎯 Ação enviada para instância " + instanceId +
+                    ": " + message.getType() + " - " + message.getUser().getName() +
+                    " | Batalha: " + message.getBattleId());
+
+        } catch (Exception e) {
+            System.out.println("❌ Erro ao enviar ação: " + e.getMessage());
+            throw new RuntimeException("Não foi possível enviar ação para o stadium service", e);
+        }
     }
 
-    private String getStadiumQueueName(Stadium stadium) {
-        return switch (stadium) {
-            case STADIUM_1 -> RabbitMQConfig.BATTLE_REQUEST_QUEUE_1;
-            case STADIUM_2 -> RabbitMQConfig.BATTLE_REQUEST_QUEUE_2;
-            case STADIUM_3 -> RabbitMQConfig.BATTLE_REQUEST_QUEUE_3;
-        };
-    }
-
-
+    // Mantenha o método convertToDTO existente
     private UserDTO convertToDTO(User user) {
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getId());

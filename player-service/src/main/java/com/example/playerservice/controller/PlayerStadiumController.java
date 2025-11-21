@@ -1,14 +1,17 @@
 package com.example.playerservice.controller;
 
-import com.example.playerservice.model.User;
 import com.example.playerservice.service.BattlePublisher;
+import com.example.playerservice.service.StadiumDiscoveryService;
 import com.example.playerservice.service.UserService;
-import com.example.playerservice.dto.Stadium;
+import com.example.playerservice.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/stadium")
@@ -16,80 +19,56 @@ public class PlayerStadiumController {
 
     private final BattlePublisher battlePublisher;
     private final UserService userService;
+    private final StadiumDiscoveryService stadiumDiscoveryService;
 
-    public PlayerStadiumController(BattlePublisher battlePublisher, UserService userService) {
+    public PlayerStadiumController(BattlePublisher battlePublisher, UserService userService,
+                                   StadiumDiscoveryService stadiumDiscoveryService) {
         this.battlePublisher = battlePublisher;
         this.userService = userService;
+        this.stadiumDiscoveryService = stadiumDiscoveryService;
     }
 
-    @PostMapping("/{userId}/enter/{stadiumName}")
-    public ResponseEntity<StadiumEntryResponse> enterSpecificStadium(
-            @PathVariable int userId,
-            @PathVariable String stadiumName) {
+    @PostMapping("/{userId}/enter")
+    public ResponseEntity<Map<String, Object>> enterStadium(@PathVariable int userId) {
         try {
             User user = userService.getUserById(userId)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            Stadium stadium = Stadium.valueOf(stadiumName.toUpperCase());
-            battlePublisher.sendLoginMessage(user, stadium);
+            battlePublisher.sendLoginMessage(user);
 
-            StadiumEntryResponse response = new StadiumEntryResponse();
-            response.setSuccess(true);
-            response.setMessage("Usuário " + user.getName() + " entrou no " + stadium.getName());
-            response.setUserId(userId);
-            response.setUserName(user.getName());
-            response.setStadium(stadium.getName());
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Usuário " + user.getName() + " entrou no stadium",
+                    "userId", userId,
+                    "userName", user.getName()
+            ));
 
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException e) {
-            StadiumEntryResponse response = new StadiumEntryResponse();
-            response.setSuccess(false);
-            response.setMessage("Stadium inválido: " + stadiumName + ". Opções: STADIUM_1, STADIUM_2, STADIUM_3");
-            return ResponseEntity.badRequest().body(response);
         } catch (RuntimeException e) {
-            StadiumEntryResponse response = new StadiumEntryResponse();
-            response.setSuccess(false);
-            response.setMessage(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
         }
     }
 
     @GetMapping("/available")
-    public ResponseEntity<StadiumListResponse> getAvailableStadiums() {
-        Stadium[] stadiums = Stadium.values();
-
-        StadiumListResponse response = new StadiumListResponse();
-        response.setStadiums(java.util.Arrays.stream(stadiums)
-                .map(stadium -> new StadiumInfo(stadium.name(), stadium.getName(), stadium.getQueueName()))
-                .toList());
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/{userId}/enter")
-    public ResponseEntity<StadiumEntryResponse> enterRandomStadium(@PathVariable int userId) {
+    public ResponseEntity<Map<String, Object>> getAvailableStadiums() {
         try {
-            User user = userService.getUserById(userId)
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            stadiumDiscoveryService.refreshStadiums();
+            var stadiums = stadiumDiscoveryService.discoverAvailableStadiums();
 
-            Stadium stadium = Stadium.getRandom();
-            battlePublisher.sendLoginMessage(user, stadium);
-
-            StadiumEntryResponse response = new StadiumEntryResponse();
-            response.setSuccess(true);
-            response.setMessage("Usuário " + user.getName() + " entrou no " + stadium.getName() + " (aleatório)");
-            response.setUserId(userId);
-            response.setUserName(user.getName());
-            response.setStadium(stadium.getName());
-
-            return ResponseEntity.ok(response);
-
-        } catch (RuntimeException e) {
-            StadiumEntryResponse response = new StadiumEntryResponse();
-            response.setSuccess(false);
-            response.setMessage(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "stadiums", stadiums,
+                    "count", stadiums.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "message", "Erro ao buscar stadiums: " + e.getMessage(),
+                    "stadiums", List.of(),
+                    "count", 0
+            ));
         }
     }
 }

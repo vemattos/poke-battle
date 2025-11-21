@@ -13,13 +13,14 @@ public class BattleMessage {
     private BattleAction action;
     private Integer damage;
     private String battleLog;
+    private String instanceId; // NOVO CAMPO
 
     public BattleMessage() {
     }
 
     public BattleMessage(MessageType type, String from, String to, UserDTO user,
                          String battleId, String opponentName, Stadium stadium, Integer target,
-                         BattleAction action, Integer damage, String battleLog) {
+                         BattleAction action, Integer damage, String battleLog, String instanceId) {
         this.type = type;
         this.from = from;
         this.to = to;
@@ -31,6 +32,7 @@ public class BattleMessage {
         this.action = action;
         this.damage = damage;
         this.battleLog = battleLog;
+        this.instanceId = instanceId;
     }
 
     public MessageType getType() {
@@ -81,7 +83,7 @@ public class BattleMessage {
         this.opponentName = opponentName;
     }
 
-    public Stadium getStadium() { return stadium = stadium; }
+    public Stadium getStadium() { return stadium; }
 
     public void setStadium(Stadium stadium) { this.stadium = stadium; }
 
@@ -117,11 +119,38 @@ public class BattleMessage {
         this.target = target;
     }
 
+    // NOVOS GETTERS E SETTERS PARA INSTANCE_ID
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
     public enum MessageType {
         LOGIN, BATTLE_START, PLAYER_ACTION, TURN_RESULT, BATTLE_END, BATTLE_STATE
     }
 
     public enum BattleAction {
         ATTACK, SWITCH_POKEMON, FLEE
+    }
+
+    @Override
+    public String toString() {
+        return "BattleMessage{" +
+                "type=" + type +
+                ", from='" + from + '\'' +
+                ", to='" + to + '\'' +
+                ", user=" + (user != null ? user.getName() : "null") +
+                ", battleId='" + battleId + '\'' +
+                ", opponentName='" + opponentName + '\'' +
+                ", stadium=" + stadium +
+                ", target=" + target +
+                ", action=" + action +
+                ", damage=" + damage +
+                ", battleLog='" + battleLog + '\'' +
+                ", instanceId='" + instanceId + '\'' +
+                '}';
     }
 }

@@ -2,7 +2,6 @@ package com.example.playerservice.controller;
 
 import com.example.playerservice.dto.CreateUserRequest;
 import com.example.playerservice.dto.AddPokemonRequest;
-import com.example.playerservice.dto.Stadium;
 import com.example.playerservice.model.User;
 import com.example.playerservice.service.BattlePublisher;
 import com.example.playerservice.service.UserService;
@@ -10,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -82,28 +82,26 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/enter-stadium")
-    public ResponseEntity<StadiumEntryResponse> enterStadium(@PathVariable int userId) {
+    public ResponseEntity<Map<String, Object>> enterStadium(@PathVariable int userId) {
         try {
             User user = userService.getUserById(userId)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            Stadium stadium = Stadium.getRandom();
-            battlePublisher.sendLoginMessage(user, stadium);
+            // ✅ CORREÇÃO: Usar o novo método sem parâmetro Stadium
+            battlePublisher.sendLoginMessage(user);
 
-            StadiumEntryResponse response = new StadiumEntryResponse();
-            response.setSuccess(true);
-            response.setMessage("Usuário " + user.getName() + " entrou no " + stadium.getName());
-            response.setUserId(userId);
-            response.setUserName(user.getName());
-            response.setStadium(stadium.getName());
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Usuário " + user.getName() + " entrou no stadium",
+                    "userId", userId,
+                    "userName", user.getName()
+            ));
 
         } catch (RuntimeException e) {
-            StadiumEntryResponse response = new StadiumEntryResponse();
-            response.setSuccess(false);
-            response.setMessage(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
         }
     }
 }

@@ -1,60 +1,45 @@
 package com.example.stadiumservice.service;
 
-import com.example.stadiumservice.dto.Stadium;
-import com.example.stadiumservice.dto.StadiumStatus;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Service
 public class StadiumService {
 
-    private final Map<Stadium, BattleService> stadiumServices = new ConcurrentHashMap<>();
-    private final BattleEngine battleEngine;
+    private final Map<String, BattleService> instanceServices = new ConcurrentHashMap<>();
+    private String currentInstanceId;
 
-    public StadiumService(BattleEngine battleEngine) {
-        this.battleEngine = battleEngine;
+    public StadiumService() {
+        // Construtor vazio - as instâncias serão registradas via registerBattleService
     }
 
-    public void registerBattleService(Stadium stadium, BattleService battleService) {
-        stadiumServices.put(stadium, battleService);
+    public void registerBattleService(String instanceId, BattleService battleService) {
+        instanceServices.put(instanceId, battleService);
+        this.currentInstanceId = instanceId;
+        System.out.println("✅ BattleService registrado: " + instanceId +
+                " | Região: " + battleService.getRegionName());
     }
 
-    public BattleService getStadiumService(Stadium stadium) {
-        return stadiumServices.get(stadium);
+    public BattleService getCurrentInstanceService() {
+        return instanceServices.get(currentInstanceId);
     }
 
-    public List<Stadium> getAvailableStadiums() {
-        return List.of(Stadium.values());
+    public String getCurrentInstanceId() {
+        return currentInstanceId;
     }
 
-    public StadiumStatus getStadiumStatus(Stadium stadium) {
-        BattleService battleService = stadiumServices.get(stadium);
-        if (battleService == null) {
-            StadiumStatus status = new StadiumStatus();
-            status.setStadium(stadium);
-            status.setWaitingPlayersCount(0);
-            status.setActiveBattlesCount(0);
-            return status;
-        }
-
-        StadiumStatus status = new StadiumStatus();
-        status.setStadium(stadium);
-        status.setWaitingPlayersCount(battleService.getWaitingPlayersCount());
-        status.setWaitingPlayers(battleService.getWaitingPlayers());
-        status.setActiveBattlesCount(battleService.getActiveBattlesCount());
-        status.setActiveBattles(battleService.getActiveBattles());
-        return status;
+    public boolean isLeader() {
+        // Lógica simples de eleição
+        return currentInstanceId != null &&
+                currentInstanceId.equals(instanceServices.keySet().stream().sorted().findFirst().orElse(currentInstanceId));
     }
 
-    public Map<Stadium, StadiumStatus> getAllStadiumsStatus() {
-        return stadiumServices.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> getStadiumStatus(entry.getKey())
-                ));
+    public Map<String, BattleService> getAllInstanceServices() {
+        return instanceServices;
+    }
+
+    public int getTotalInstances() {
+        return instanceServices.size();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.playerservice.consumer;
 
+import com.example.playerservice.controller.BattleController;
 import com.example.playerservice.dto.BattleMessage;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -7,9 +8,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class BattleResponseConsumer {
 
+    private final BattleController battleController;
+
+    public BattleResponseConsumer(BattleController battleController) {
+        this.battleController = battleController;
+    }
+
     @RabbitListener(queues = "battle.response.queue")
     public void receiveBattleResponse(BattleMessage message) {
-        System.out.println("[PLAYER] Response: " + message.getType() + " - " + message.getUser().getName());
+        System.out.println("[PLAYER] Response: " + message.getType() + " - " +
+                (message.getUser() != null ? message.getUser().getName() : "No User"));
 
         switch (message.getType()) {
             case BATTLE_START:
@@ -35,16 +43,23 @@ public class BattleResponseConsumer {
     }
 
     private void handleBattleStart(BattleMessage message) {
+        // ✅ CORREÇÃO: Registrar a instância da batalha
+        if (message.getInstanceId() != null && message.getBattleId() != null) {
+            battleController.registerBattleInstance(message.getBattleId(), message.getInstanceId());
+        }
+
         System.out.println("   BATALHA INICIADA!");
         System.out.println("   ID: " + message.getBattleId());
         System.out.println("   Você: " + message.getUser().getName());
         System.out.println("   Oponente: " + message.getOpponentName());
+        System.out.println("   Instância: " + message.getInstanceId());
         System.out.println("   Comando: POST /battle/" + message.getUser().getId() + "/attack?battleId=" + message.getBattleId());
     }
 
     private void handlePlayerAction(BattleMessage message) {
         System.out.println("SUA VEZ!");
         System.out.println("Batalha: " + message.getBattleId());
+        System.out.println("Instância: " + message.getInstanceId());
 
         if (message.getBattleLog() != null &&
                 (message.getBattleLog().contains("ERRO") ||
@@ -68,6 +83,7 @@ public class BattleResponseConsumer {
         if (message.getDamage() != null) {
             System.out.println("   Dano causado: " + message.getDamage());
         }
+        System.out.println("   Instância: " + message.getInstanceId());
     }
 
     private void handleBattleEnd(BattleMessage message) {
@@ -80,6 +96,7 @@ public class BattleResponseConsumer {
         }
 
         System.out.println("ID: " + message.getBattleId());
+        System.out.println("Instância: " + message.getInstanceId());
         System.out.println("A batalha terminou. Não envie mais ações.");
     }
 }
