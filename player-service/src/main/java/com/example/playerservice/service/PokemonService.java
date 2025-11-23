@@ -6,7 +6,6 @@ import com.example.playerservice.repository.PokemonRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,10 +30,6 @@ public class PokemonService {
 
         Pokemon pokemon = pokeApiService.convertToPokemonEntity(apiResponse);
         return pokemonRepository.save(pokemon);
-    }
-
-    public List<Pokemon> findAll() {
-        return pokemonRepository.findAll();
     }
 
     public Optional<Pokemon> findById(int id) {

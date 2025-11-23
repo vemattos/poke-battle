@@ -34,7 +34,7 @@ public class BattleController {
     // Método para registrar onde uma batalha está ocorrendo
     public void registerBattleInstance(String battleId, String instanceId) {
         battleInstances.put(battleId, instanceId);
-        System.out.println("🎯 Batalha registrada: " + battleId + " → Instância: " + instanceId);
+        System.out.println("Batalha registrada: " + battleId + " → Instância: " + instanceId);
     }
 
     @PostMapping("/{userId}/attack")
@@ -77,7 +77,7 @@ public class BattleController {
             message.setBattleId(battleId);
             message.setAction(action);
             message.setTarget(target);
-            message.setInstanceId(instanceId); // ✅ AGORA TEM INSTANCE_ID
+            message.setInstanceId(instanceId);
 
             battlePublisher.sendBattleAction(message);
 
@@ -97,7 +97,7 @@ public class BattleController {
         }
     }
 
-    // ✅ NOVO MÉTODO: Extrair instanceId do battleId
+    // NOVO MÉTODO: Extrair instanceId do battleId
     private String extractInstanceIdFromBattleId(String battleId) {
         if (battleId == null) return null;
 

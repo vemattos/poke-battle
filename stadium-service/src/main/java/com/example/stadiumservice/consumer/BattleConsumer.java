@@ -59,7 +59,7 @@ public class BattleConsumer {
             System.out.println("✅ BattleConsumer configurado para instância: " + instanceId);
             System.out.println("📬 Queue: " + instanceQueueName);
         } else {
-            System.out.println("❌ BattleService não encontrado no StadiumService");
+            System.out.println("BattleService não encontrado no StadiumService");
         }
     }
 
@@ -71,14 +71,14 @@ public class BattleConsumer {
             instanceId = stadiumService.getCurrentInstanceId();
         }
 
-        System.out.println("📨 Mensagem recebida na instância " + instanceId +
+        System.out.println("Mensagem recebida na instância " + instanceId +
                 ": " + message.getType() + " - " +
                 (message.getUser() != null ? message.getUser().getName() : "No User"));
 
         BattleService battleService = getBattleServiceForMessage(message, instanceId);
 
         if (battleService == null) {
-            System.out.println("❌ BattleService não encontrado para instância: " + instanceId);
+            System.out.println("BattleService não encontrado para instância: " + instanceId);
             return;
         }
 
@@ -105,7 +105,7 @@ public class BattleConsumer {
                     if (message.getUser() != null) {
                         battleService.handlePlayerLogin(message.getUser());
                     } else {
-                        System.out.println("❌ User é null na mensagem LOGIN");
+                        System.out.println(" User é null na mensagem LOGIN");
                     }
                     break;
 
@@ -113,7 +113,7 @@ public class BattleConsumer {
                     if (message.getUser() != null && message.getBattleId() != null) {
                         battleService.handleBattleAction(message);
                     } else {
-                        System.out.println("❌ Dados incompletos na mensagem PLAYER_ACTION");
+                        System.out.println("Dados incompletos na mensagem PLAYER_ACTION");
                     }
                     break;
 
@@ -121,14 +121,14 @@ public class BattleConsumer {
                 case TURN_RESULT:
                 case BATTLE_END:
                     // Estas mensagens são geralmente de saída, não de entrada
-                    System.out.println("ℹ️ Mensagem de tipo " + message.getType() + " recebida no consumer - geralmente é de saída");
+                    System.out.println("Mensagem de tipo " + message.getType() + " recebida no consumer - geralmente é de saída");
                     break;
 
                 default:
-                    System.out.println("❌ Tipo de request não reconhecido: " + message.getType());
+                    System.out.println("Tipo de request não reconhecido: " + message.getType());
             }
         } catch (Exception e) {
-            System.out.println("❌ Erro ao processar mensagem na instância " + instanceId + ": " + e.getMessage());
+            System.out.println("Erro ao processar mensagem na instância " + instanceId + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -136,7 +136,7 @@ public class BattleConsumer {
     // Método para adicionar dinamicamente novas instâncias (útil para clustering)
     public void registerInstanceBattleService(String instanceId, BattleService battleService) {
         instanceBattleServices.put(instanceId, battleService);
-        System.out.println("✅ Nova instância registrada no BattleConsumer: " + instanceId);
+        System.out.println("Nova instância registrada no BattleConsumer: " + instanceId);
     }
 
     public String getCurrentInstanceQueueName() {

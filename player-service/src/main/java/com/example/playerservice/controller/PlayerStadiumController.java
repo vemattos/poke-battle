@@ -3,6 +3,8 @@ package com.example.playerservice.controller;
 import com.example.playerservice.service.BattlePublisher;
 import com.example.playerservice.service.StadiumDiscoveryService;
 import com.example.playerservice.service.UserService;
+import com.example.playerservice.dto.Stadium;
+import com.example.playerservice.dto.StadiumStatusDTO;
 import com.example.playerservice.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,32 +24,38 @@ public class PlayerStadiumController {
     private final StadiumDiscoveryService stadiumDiscoveryService;
 
     public PlayerStadiumController(BattlePublisher battlePublisher, UserService userService,
-                                   StadiumDiscoveryService stadiumDiscoveryService) {
+            StadiumDiscoveryService stadiumDiscoveryService) {
         this.battlePublisher = battlePublisher;
         this.userService = userService;
         this.stadiumDiscoveryService = stadiumDiscoveryService;
     }
 
-    @PostMapping("/{userId}/enter")
-    public ResponseEntity<Map<String, Object>> enterStadium(@PathVariable int userId) {
+    @PostMapping("/{userId}/enter/{stadiumName}")
+    public ResponseEntity<Map<String, Object>> enterStadium(@PathVariable int userId,
+            @PathVariable String stadiumName) {
         try {
             User user = userService.getUserById(userId)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            battlePublisher.sendLoginMessage(user);
+            Stadium stadium = stadiumDiscoveryService.getStadiumByName(stadiumName);
+
+            if (stadium == null) {
+                System.out.println("Nenhum estádio encontrado para o usuário: " + userId);
+                throw new RuntimeException("Stadium not found for user " + userId);
+            }
+
+            battlePublisher.sendLoginMessage(user, stadium);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Usuário " + user.getName() + " entrou no stadium",
                     "userId", userId,
-                    "userName", user.getName()
-            ));
+                    "userName", user.getName()));
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", e.getMessage()
-            ));
+                    "message", e.getMessage()));
         }
     }
 
@@ -60,17 +68,22 @@ public class PlayerStadiumController {
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "stadiums", stadiums,
-                    "count", stadiums.size()
-            ));
+                    "count", stadiums.size()));
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of(
                     "success", false,
                     "message", "Erro ao buscar stadiums: " + e.getMessage(),
                     "stadiums", List.of(),
-                    "count", 0
-            ));
+                    "count", 0));
         }
     }
+
+    @GetMapping("/{stadiumName}/status")
+    public ResponseEntity<StadiumStatusDTO> getStadiumStatus(@PathVariable String stadiumName) {
+        var status = stadiumDiscoveryService.getStadiumStatus(stadiumName);
+        return ResponseEntity.ok(status);
+    }
+
 }
 
 @Data

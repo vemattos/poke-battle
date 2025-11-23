@@ -1,6 +1,8 @@
 package com.example.playerservice.service;
 
 import com.example.playerservice.dto.Stadium;
+import com.example.playerservice.dto.StadiumStatusDTO;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -35,8 +37,8 @@ public class StadiumDiscoveryService {
                 String statusUrl = instanceUrl + "/api/stadium/status";
                 ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                         statusUrl, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<Map<String, Object>>() {}
-                );
+                        new ParameterizedTypeReference<Map<String, Object>>() {
+                        });
 
                 if (response.getStatusCode().is2xxSuccessful()) {
                     Map<String, Object> status = response.getBody();
@@ -51,46 +53,44 @@ public class StadiumDiscoveryService {
                     stadium.setQueueName("battle.request.queue.stadium-" + instanceId);
                     stadium.setWaitingPlayers(waitingPlayers != null ? waitingPlayers : 0);
                     stadium.setActiveBattles(activeBattles != null ? activeBattles : 0);
+                    stadium.setInstanceUrl(instanceUrl);
 
                     stadiums.add(stadium);
                     availableStadiums.put(instanceId, stadium);
 
-                    System.out.println("✅ Stadium descoberto: " + regionName +
+                    System.out.println("Stadium descoberto: " + regionName +
                             " (Jogadores: " + waitingPlayers +
                             ", Batalhas: " + activeBattles + ")");
                 }
             } catch (Exception e) {
-                System.out.println("❌ Instância indisponível: " + instanceUrl);
+                System.out.println("Instância indisponível: " + instanceUrl);
             }
         }
 
         return stadiums;
     }
 
-    public Stadium getOptimalStadium() {
-        List<Stadium> stadiums = discoverAvailableStadiums();
+    public Stadium getStadiumByName(String name) {
+        refreshStadiums();
 
-        if (stadiums.isEmpty()) {
-            throw new RuntimeException("Nenhum stadium service disponível");
-        }
-
-        return stadiums.stream()
-                .min((s1, s2) -> Integer.compare(s1.getWaitingPlayers(), s2.getWaitingPlayers()))
-                .orElse(stadiums.get(0));
+        return discoverAvailableStadiums().stream()
+                .filter(s -> s.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
 
-    private Stadium createStadiumFromStatus(String instanceId, String instanceUrl, Map<String, Object> status) {
-        Stadium stadium = new Stadium();
-        stadium.setInstanceId(instanceId);
-        stadium.setName("Stadium-" + instanceId.substring(instanceId.length() - 4));
-        stadium.setQueueName("battle.request.queue.stadium-" + instanceId);
+  public StadiumStatusDTO getStadiumStatus(String name) {
+        Stadium stadium = getStadiumByName(name);
+        String statusUrl = stadium.getInstanceUrl() + "/api/stadium/status";
 
-        if (status != null) {
-            stadium.setWaitingPlayers((Integer) status.getOrDefault("waitingPlayers", 0));
-            stadium.setActiveBattles((Integer) status.getOrDefault("activeBattles", 0));
-        }
+        ResponseEntity<StadiumStatusDTO> response = restTemplate.exchange(
+                statusUrl,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<StadiumStatusDTO>() {}
+        );
 
-        return stadium;
+        return response.getBody();
     }
 
     public void refreshStadiums() {

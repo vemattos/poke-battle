@@ -71,17 +71,17 @@ public class BattleService {
     }
 
     public void handlePlayerLogin(UserDTO user) {
-        System.out.println("👤 Jogador " + user.getName() + " entrou na região " + region.getName());
+        System.out.println("Jogador " + user.getName() + " entrou na região " + region.getName());
 
         if (waitingPlayers.isEmpty()) {
             waitingPlayers.offer(user);
-            System.out.println("⏳ " + user.getName() + " esperando oponente em " + region.getName() + "...");
+            System.out.println(user.getName() + " esperando oponente em " + region.getName() + "...");
             sendWaitingResponse(user);
         } else {
             UserDTO player1 = waitingPlayers.poll();
             UserDTO player2 = user;
 
-            System.out.println("🎯 Batalha encontrada em " + region.getName() + ": " +
+            System.out.println("Batalha encontrada em " + region.getName() + ": " +
                     player1.getName() + " vs " + player2.getName());
             startBattle(player1, player2);
         }
@@ -93,16 +93,16 @@ public class BattleService {
 
         BattleSession battle = activeBattles.get(battleId);
         if (battle == null) {
-            System.out.println("❌ Batalha não encontrada: " + battleId);
+            System.out.println("Batalha não encontrada: " + battleId);
             return;
         }
 
         if (battle.isBattleEnded()) {
-            System.out.println("❌ Batalha já terminou: " + battleId);
+            System.out.println("Batalha já terminou: " + battleId);
             return;
         }
 
-        System.out.println("🎯 Ação recebida de " + message.getUser().getName() + " na região " + region.getName() + ": " + message.getAction());
+        System.out.println("Ação recebida de " + message.getUser().getName() + " na região " + region.getName() + ": " + message.getAction());
 
         if (message.getAction() == BattleMessage.BattleAction.FLEE) {
             handlePlayerFlee(battle, playerId);
@@ -134,7 +134,7 @@ public class BattleService {
         BattleSession battle = new BattleSession(battleId, player1, player2);
         activeBattles.put(battleId, battle);
 
-        System.out.println("⚔️ Batalha " + battleId + " iniciada na região " + region.getName() + "!");
+        System.out.println("Batalha " + battleId + " iniciada na região " + region.getName() + "!");
 
         sendBattleStartResponse(player1, battleId, player2.getName());
         sendBattleStartResponse(player2, battleId, player1.getName());
@@ -153,7 +153,7 @@ public class BattleService {
             String pokemonName = isPlayer1 ?
                     battle.getCurrentPokemon1().getName() :
                     battle.getCurrentPokemon2().getName();
-            System.out.println("🔄 " + battle.getPlayer(playerId).getName() + " trocou para " + pokemonName + " em " + region.getName());
+            System.out.println("" + battle.getPlayer(playerId).getName() + " trocou para " + pokemonName + " em " + region.getName());
         }
 
         return success;
@@ -161,20 +161,20 @@ public class BattleService {
 
     private void processTurn(BattleSession battle) {
         try {
-            System.out.println("🔄 Processando turno em " + region.getName() + ": " + battle.getBattleId());
+            System.out.println("Processando turno em " + region.getName() + ": " + battle.getBattleId());
 
             if (battle.getCurrentPokemon1() == null || battle.getCurrentPokemon2() == null) {
-                System.out.println("❌ ERRO: Pokemon atual é null! Encerrando batalha em " + region.getName());
+                System.out.println("ERRO: Pokemon atual é null! Encerrando batalha em " + region.getName());
                 handleBattleError(battle, "Erro: Pokemon não encontrado");
                 return;
             }
 
-            System.out.println("🐾 Pokemon ativo Player 1: " + battle.getCurrentPokemon1().getName());
-            System.out.println("🐾 Pokemon ativo Player 2: " + battle.getCurrentPokemon2().getName());
+            System.out.println("Pokemon ativo Player 1: " + battle.getCurrentPokemon1().getName());
+            System.out.println("Pokemon ativo Player 2: " + battle.getCurrentPokemon2().getName());
 
-            System.out.println("❤️ HP Antes - " + battle.getCurrentPokemon1().getName() + ": " +
+            System.out.println("HP Antes - " + battle.getCurrentPokemon1().getName() + ": " +
                     battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
-            System.out.println("❤️ HP Antes - " + battle.getCurrentPokemon2().getName() + ": " +
+            System.out.println("HP Antes - " + battle.getCurrentPokemon2().getName() + ": " +
                     battle.getCurrentPokemon2().getCurrentHp() + "/" + battle.getCurrentPokemon2().getHp());
 
             BattleMessage.BattleAction action1 = battle.getPendingActions().get(String.valueOf(battle.getPlayer1().getId()));
@@ -203,13 +203,13 @@ public class BattleService {
                         String.valueOf(battle.getPlayer1().getId()) : String.valueOf(battle.getPlayer2().getId()));
             }
 
-            System.out.println("❤️ HP Depois - " + battle.getCurrentPokemon1().getName() + ": " +
+            System.out.println("HP Depois - " + battle.getCurrentPokemon1().getName() + ": " +
                     battle.getCurrentPokemon1().getCurrentHp() + "/" + battle.getCurrentPokemon1().getHp());
-            System.out.println("❤️ HP Depois - " + battle.getCurrentPokemon2().getName() + ": " +
+            System.out.println("HP Depois - " + battle.getCurrentPokemon2().getName() + ": " +
                     battle.getCurrentPokemon2().getCurrentHp() + "/" + battle.getCurrentPokemon2().getHp());
 
         } catch (Exception e) {
-            System.out.println("❌ ERRO CRITICO no processTurn em " + region.getName() + ": " + e.getMessage());
+            System.out.println("ERRO CRITICO no processTurn em " + region.getName() + ": " + e.getMessage());
             e.printStackTrace();
             handleBattleError(battle, "Erro no processamento do turno: " + e.getMessage());
         }
@@ -225,11 +225,11 @@ public class BattleService {
         if (action == BattleMessage.BattleAction.ATTACK) {
             result = battleEngine.calculateBattle(attacker, defender);
             defender.setCurrentHp(defender.getCurrentHp() - result.getDamage());
-            System.out.println("💥 " + player.getName() + " atacou em " + region.getName() + "! " + result.getLog());
+            System.out.println(player.getName() + " atacou em " + region.getName() + "! " + result.getLog());
 
         } else if (action == BattleMessage.BattleAction.SWITCH_POKEMON) {
             result = new BattleEngine.BattleResult(0, player.getName() + " trocou para " + attacker.getName() + "!");
-            System.out.println("🔄 " + result.getLog() + " em " + region.getName());
+            System.out.println(result.getLog() + " em " + region.getName());
         }
 
         sendIndividualTurnResult(battle, String.valueOf(player.getId()), result.getDamage(), result.getLog());
@@ -237,18 +237,18 @@ public class BattleService {
 
     private void checkAutoSwitch(BattleSession battle) {
         if (battle.getCurrentPokemon1().isFainted()) {
-            System.out.println("😵 " + battle.getCurrentPokemon1().getName() + " desmaiou em " + region.getName() + "! Procurando substituto...");
+            System.out.println(battle.getCurrentPokemon1().getName() + " desmaiou em " + region.getName() + "! Procurando substituto...");
             boolean switched = autoSwitchPokemon(battle, battle.getPlayer1(), true);
             if (!switched) {
-                System.out.println("💀 " + battle.getPlayer1().getName() + " não tem mais Pokemon em " + region.getName() + "!");
+                System.out.println(battle.getPlayer1().getName() + " não tem mais Pokemon em " + region.getName() + "!");
             }
         }
 
         if (battle.getCurrentPokemon2().isFainted()) {
-            System.out.println("😵 " + battle.getCurrentPokemon2().getName() + " desmaiou em " + region.getName() + "! Procurando substituto...");
+            System.out.println(battle.getCurrentPokemon2().getName() + " desmaiou em " + region.getName() + "! Procurando substituto...");
             boolean switched = autoSwitchPokemon(battle, battle.getPlayer2(), false);
             if (!switched) {
-                System.out.println("💀 " + battle.getPlayer2().getName() + " não tem mais Pokemon em " + region.getName() + "!");
+                System.out.println(battle.getPlayer2().getName() + " não tem mais Pokemon em " + region.getName() + "!");
             }
         }
     }
@@ -257,18 +257,18 @@ public class BattleService {
         boolean pokemon1Fainted = battle.getCurrentPokemon1().isFainted();
         boolean pokemon2Fainted = battle.getCurrentPokemon2().isFainted();
 
-        System.out.println("🔍 Verificando fim de batalha em " + region.getName() + ":");
-        System.out.println("❌ " + battle.getCurrentPokemon1().getName() + " desmaiou: " + pokemon1Fainted);
-        System.out.println("❌ " + battle.getCurrentPokemon2().getName() + " desmaiou: " + pokemon2Fainted);
+        System.out.println("Verificando fim de batalha em " + region.getName() + ":");
+        System.out.println(battle.getCurrentPokemon1().getName() + " desmaiou: " + pokemon1Fainted);
+        System.out.println(battle.getCurrentPokemon2().getName() + " desmaiou: " + pokemon2Fainted);
 
         if (pokemon1Fainted || pokemon2Fainted) {
-            System.out.println("😵 Pokemon desmaiou em " + region.getName() + "! Verificando time inteiro...");
+            System.out.println("Pokemon desmaiou em " + region.getName() + "! Verificando time inteiro...");
 
             boolean team1HasAlive = battle.getPlayer1().getTeam().stream().anyMatch(p -> !p.isFainted());
             boolean team2HasAlive = battle.getPlayer2().getTeam().stream().anyMatch(p -> !p.isFainted());
 
-            System.out.println("👥 Time " + battle.getPlayer1().getName() + " tem Pokemon vivo: " + team1HasAlive);
-            System.out.println("👥 Time " + battle.getPlayer2().getName() + " tem Pokemon vivo: " + team2HasAlive);
+            System.out.println("Time " + battle.getPlayer1().getName() + " tem Pokemon vivo: " + team1HasAlive);
+            System.out.println("Time " + battle.getPlayer2().getName() + " tem Pokemon vivo: " + team2HasAlive);
 
             if (!team1HasAlive || !team2HasAlive) {
                 battle.setBattleEnded(true);
@@ -278,11 +278,11 @@ public class BattleService {
                 String winnerName = !team1HasAlive ? battle.getPlayer2().getName() :
                         battle.getPlayer1().getName();
 
-                System.out.println("🏆 Batalha " + battle.getBattleId() + " terminou em " + region.getName() + "! Vencedor: " + winnerName);
+                System.out.println("Batalha " + battle.getBattleId() + " terminou em " + region.getName() + "! Vencedor: " + winnerName);
                 sendBattleEndResponse(battle, winnerId, winnerName);
                 activeBattles.remove(battle.getBattleId());
             } else {
-                System.out.println("✅ Time ainda tem Pokemon vivo, continuando batalha em " + region.getName() + "...");
+                System.out.println("Time ainda tem Pokemon vivo, continuando batalha em " + region.getName() + "...");
             }
         }
     }
@@ -299,7 +299,7 @@ public class BattleService {
         message.setBattleLog("ERRO: Nao foi possivel trocar de Pokemon! Tente outro.");
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
-        System.out.println("❌ Troca falhou para: " + player.getName() + " em " + region.getName());
+        System.out.println("Troca falhou para: " + player.getName() + " em " + region.getName());
     }
 
     private void sendWaitingResponse(UserDTO user) {
@@ -332,7 +332,7 @@ public class BattleService {
         message.setInstanceId(instanceId);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
-        System.out.println("🎯 Solicitando ação de: " + player.getName() + " em " + region.getName());
+        System.out.println("Solicitando ação de: " + player.getName() + " em " + region.getName());
     }
 
     private void sendWaitingForOpponentResponse(BattleSession battle, String playerId) {
@@ -344,7 +344,7 @@ public class BattleService {
         message.setInstanceId(instanceId);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
-        System.out.println("⏳ Aguardando oponente para: " + player.getName() + " em " + region.getName());
+        System.out.println("Aguardando oponente para: " + player.getName() + " em " + region.getName());
     }
 
     private void sendIndividualTurnResult(BattleSession battle, String playerId, int damage, String log) {
@@ -358,7 +358,7 @@ public class BattleService {
         message.setBattleLog(log);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
-        System.out.println("📊 Resultado para " + player.getName() + " em " + region.getName() + ": " + log);
+        System.out.println("Resultado para " + player.getName() + " em " + region.getName() + ": " + log);
     }
 
     private void sendBattleEndResponse(BattleSession battle, String winnerId, String winnerName) {
@@ -377,7 +377,7 @@ public class BattleService {
         message.setOpponentName(winnerName);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
-        System.out.println("🏁 Fim de batalha enviado para: " + player.getName() + " em " + region.getName() + " | Vencedor: " + winnerName);
+        System.out.println("Fim de batalha enviado para: " + player.getName() + " em " + region.getName() + " | Vencedor: " + winnerName);
     }
 
     private boolean autoSwitchPokemon(BattleSession battle, UserDTO player, boolean isPlayer1) {
@@ -389,7 +389,7 @@ public class BattleService {
                 } else {
                     battle.switchPokemon2(i);
                 }
-                System.out.println("🔄 " + player.getName() + " trocou automaticamente para " + team.get(i).getName() + " em " + region.getName());
+                System.out.println(player.getName() + " trocou automaticamente para " + team.get(i).getName() + " em " + region.getName());
                 return true;
             }
         }
@@ -397,7 +397,7 @@ public class BattleService {
     }
 
     private void handlePlayerFlee(BattleSession battle, String playerId) {
-        System.out.println("🏃 " + battle.getPlayer(playerId).getName() + " fugiu da batalha em " + region.getName() + "!");
+        System.out.println(battle.getPlayer(playerId).getName() + " fugiu da batalha em " + region.getName() + "!");
 
         boolean isPlayer1 = String.valueOf(battle.getPlayer1().getId()).equals(playerId);
         String winnerId = isPlayer1 ? String.valueOf(battle.getPlayer2().getId()) : String.valueOf(battle.getPlayer1().getId());
@@ -436,11 +436,11 @@ public class BattleService {
         message.setOpponentName(otherPlayerName);
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.BATTLE_RESPONSE_QUEUE, message);
-        System.out.println("📤 Resultado de fuga enviado para: " + player.getName() + " em " + region.getName());
+        System.out.println("Resultado de fuga enviado para: " + player.getName() + " em " + region.getName());
     }
 
     private void handleBattleError(BattleSession battle, String errorMessage) {
-        System.out.println("❌ Lidando com erro na batalha em " + region.getName() + ": " + errorMessage);
+        System.out.println("Lidando com erro na batalha em " + region.getName() + ": " + errorMessage);
 
         BattleMessage errorMsg = new BattleMessage();
         errorMsg.setType(BattleMessage.MessageType.BATTLE_END);

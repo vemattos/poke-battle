@@ -6,15 +6,17 @@ public class Stadium {
     private String queueName;
     private int waitingPlayers;
     private int activeBattles;
+    private String instanceUrl;
 
     public Stadium() {}
 
-    public Stadium(String instanceId, String name, String queueName, int waitingPlayers, int activeBattles) {
+    public Stadium(String instanceId, String name, String queueName, int waitingPlayers, int activeBattles, String instanceUrl) {
         this.instanceId = instanceId;
         this.name = name;
         this.queueName = queueName;
         this.waitingPlayers = waitingPlayers;
         this.activeBattles = activeBattles;
+        this.instanceUrl = instanceUrl;
     }
 
     // Getters e Setters
@@ -32,4 +34,7 @@ public class Stadium {
 
     public int getActiveBattles() { return activeBattles; }
     public void setActiveBattles(int activeBattles) { this.activeBattles = activeBattles; }
+
+    public String getInstanceUrl() { return instanceUrl; }
+    public void setInstanceUrl(String instanceUrl) { this.instanceUrl = instanceUrl; }
 }

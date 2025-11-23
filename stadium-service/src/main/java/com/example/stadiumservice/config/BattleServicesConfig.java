@@ -26,8 +26,8 @@ public class BattleServicesConfig {
         BattleService battleService = new BattleService(rabbitTemplate, battleEngine, instanceId, region);
         stadiumService.registerBattleService(instanceId, battleService);
 
-        System.out.println("🎯 BattleService criado para região: " + region.getName());
-        System.out.println("📬 Instance ID: " + instanceId);
+        System.out.println("BattleService criado para região: " + region.getName());
+        System.out.println("Instance ID: " + instanceId);
 
         return battleService;
     }

@@ -17,7 +17,7 @@ public class StadiumService {
     public void registerBattleService(String instanceId, BattleService battleService) {
         instanceServices.put(instanceId, battleService);
         this.currentInstanceId = instanceId;
-        System.out.println("✅ BattleService registrado: " + instanceId +
+        System.out.println("BattleService registrado: " + instanceId +
                 " | Região: " + battleService.getRegionName());
     }
 
@@ -41,5 +41,9 @@ public class StadiumService {
 
     public int getTotalInstances() {
         return instanceServices.size();
+    }
+
+    public int getPlayersInQueue() {
+        return instanceServices.get(getCurrentInstanceId()).getWaitingPlayersCount();
     }
 }

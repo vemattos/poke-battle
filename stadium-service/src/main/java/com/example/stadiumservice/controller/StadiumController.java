@@ -27,8 +27,19 @@ public class StadiumController {
                 "waitingPlayers", currentService != null ? currentService.getWaitingPlayersCount() : 0,
                 "activeBattles", currentService != null ? currentService.getActiveBattlesCount() : 0,
                 "isLeader", stadiumService.isLeader(),
-                "totalInstances", stadiumService.getTotalInstances()
+                "totalInstances", stadiumService.getTotalInstances(),
+                "playersInQueue", stadiumService.getPlayersInQueue()
         );
+    }
+
+    @GetMapping("/active")
+    public Object getActiveBattles() {
+        return stadiumService.getCurrentInstanceService().getActiveBattles();
+    }
+
+    @GetMapping("/waiting")
+    public Object getWaitingPlayers() {
+        return stadiumService.getCurrentInstanceService().getWaitingPlayers();
     }
 }
 

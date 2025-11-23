@@ -5,7 +5,6 @@ import com.example.playerservice.service.PokemonService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -26,12 +25,6 @@ public class PokemonController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Pokemon>> getAllPokemon() {
-        List<Pokemon> pokemonList = pokemonService.findAll();
-        return ResponseEntity.ok(pokemonList);
     }
 
     @GetMapping("/id/{id}")
