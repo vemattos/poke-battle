@@ -1,6 +1,7 @@
 package com.example.stadiumservice.service;
 
 import org.springframework.stereotype.Service;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,14 +12,23 @@ public class StadiumService {
     private String currentInstanceId;
 
     public StadiumService() {
-        // Construtor vazio - as instâncias serão registradas via registerBattleService
+        System.out.println("StadiumService inicializado");
     }
 
     public void registerBattleService(String instanceId, BattleService battleService) {
         instanceServices.put(instanceId, battleService);
         this.currentInstanceId = instanceId;
+
         System.out.println("BattleService registrado: " + instanceId +
                 " | Região: " + battleService.getRegionName());
+    }
+
+    public Map<String, BattleService> getAllInstanceServices() {
+        return new ConcurrentHashMap<>(instanceServices);
+    }
+
+    public void setElectionInfo(boolean isLeader, String leaderInstanceId) {
+        System.out.println("Info de eleição atualizada | Líder: " + leaderInstanceId + " | Eu sou líder: " + isLeader);
     }
 
     public BattleService getCurrentInstanceService() {
@@ -29,21 +39,13 @@ public class StadiumService {
         return currentInstanceId;
     }
 
-    public boolean isLeader() {
-        // Lógica simples de eleição
-        return currentInstanceId != null &&
-                currentInstanceId.equals(instanceServices.keySet().stream().sorted().findFirst().orElse(currentInstanceId));
+    public int getWaitingPlayersCount() {
+        BattleService service = getCurrentInstanceService();
+        return service != null ? service.getWaitingPlayersCount() : 0;
     }
 
-    public Map<String, BattleService> getAllInstanceServices() {
-        return instanceServices;
-    }
-
-    public int getTotalInstances() {
-        return instanceServices.size();
-    }
-
-    public int getPlayersInQueue() {
-        return instanceServices.get(getCurrentInstanceId()).getWaitingPlayersCount();
+    public int getActiveBattlesCount() {
+        BattleService service = getCurrentInstanceService();
+        return service != null ? service.getActiveBattlesCount() : 0;
     }
 }

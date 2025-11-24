@@ -119,7 +119,6 @@ public class BattleMessage {
         this.target = target;
     }
 
-    // NOVOS GETTERS E SETTERS PARA INSTANCE_ID
     public String getInstanceId() {
         return instanceId;
     }

@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
-@Service
 public class BattleService {
 
     private final RabbitTemplate rabbitTemplate;
@@ -287,8 +286,6 @@ public class BattleService {
         }
     }
 
-    // ========== MÉTODOS DE ENVIO DE MENSAGENS ==========
-
     private void sendSwitchFailedResponse(BattleSession battle, String playerId) {
         UserDTO player = battle.getPlayer(playerId);
         BattleMessage message = new BattleMessage();
@@ -452,8 +449,6 @@ public class BattleService {
         activeBattles.remove(battle.getBattleId());
     }
 
-    // ========== INNER CLASS BATTLE SESSION ==========
-
     private static class BattleSession {
         private final String battleId;
         private final UserDTO player1;
@@ -469,7 +464,6 @@ public class BattleService {
             this.player1 = player1;
             this.player2 = player2;
 
-            // Reset HP dos Pokémons se necessário
             player1.getTeam().forEach(pokemon -> {
                 if (pokemon.getCurrentHp() <= 0) pokemon.setCurrentHp(pokemon.getHp());
             });
@@ -531,7 +525,6 @@ public class BattleService {
             this.currentTurn = this.currentTurn.equals("player1") ? "player2" : "player1";
         }
 
-        // Getters
         public String getBattleId() { return battleId; }
         public UserDTO getPlayer1() { return player1; }
         public UserDTO getPlayer2() { return player2; }

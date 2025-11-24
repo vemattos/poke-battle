@@ -33,9 +33,8 @@ public class BattleConsumer {
 
     @PostConstruct
     public void init() {
-        // Aguarda o BattleService ser registrado no StadiumService
         try {
-            Thread.sleep(1000); // Pequeno delay para garantir registro
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -49,15 +48,13 @@ public class BattleConsumer {
             String instanceId = currentBattleService.getInstanceId();
             this.instanceQueueName = RabbitMQConfig.BATTLE_REQUEST_QUEUE_PREFIX + instanceId;
 
-            // Cria a queue dinamicamente para esta instância
             Queue queue = rabbitMQConfig.createBattleRequestQueue(instanceId);
             rabbitAdmin.declareQueue(queue);
 
-            // Registra esta instância no mapa local
             instanceBattleServices.put(instanceId, currentBattleService);
 
-            System.out.println("✅ BattleConsumer configurado para instância: " + instanceId);
-            System.out.println("📬 Queue: " + instanceQueueName);
+            System.out.println("BattleConsumer configurado para instância: " + instanceId);
+            System.out.println("Queue: " + instanceQueueName);
         } else {
             System.out.println("BattleService não encontrado no StadiumService");
         }
@@ -86,7 +83,6 @@ public class BattleConsumer {
     }
 
     private BattleService getBattleServiceForMessage(BattleMessage message, String targetInstanceId) {
-        // Se a mensagem especifica uma instância, tenta usar essa
         if (message.getInstanceId() != null && !message.getInstanceId().equals(targetInstanceId)) {
             BattleService targetService = stadiumService.getAllInstanceServices().get(message.getInstanceId());
             if (targetService != null) {
@@ -94,7 +90,6 @@ public class BattleConsumer {
             }
         }
 
-        // Caso contrário, usa a instância atual
         return stadiumService.getCurrentInstanceService();
     }
 
@@ -120,7 +115,6 @@ public class BattleConsumer {
                 case BATTLE_START:
                 case TURN_RESULT:
                 case BATTLE_END:
-                    // Estas mensagens são geralmente de saída, não de entrada
                     System.out.println("Mensagem de tipo " + message.getType() + " recebida no consumer - geralmente é de saída");
                     break;
 
@@ -133,7 +127,6 @@ public class BattleConsumer {
         }
     }
 
-    // Método para adicionar dinamicamente novas instâncias (útil para clustering)
     public void registerInstanceBattleService(String instanceId, BattleService battleService) {
         instanceBattleServices.put(instanceId, battleService);
         System.out.println("Nova instância registrada no BattleConsumer: " + instanceId);

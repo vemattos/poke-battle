@@ -1,5 +1,6 @@
 package com.example.stadiumservice.controller;
 
+import com.example.stadiumservice.service.ElectionService;
 import com.example.stadiumservice.service.StadiumService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,23 +13,22 @@ import java.util.Map;
 public class StadiumController {
 
     private final StadiumService stadiumService;
+    private final ElectionService electionService;
 
-    public StadiumController(StadiumService stadiumService) {
+    public StadiumController(StadiumService stadiumService, ElectionService electionService) {
         this.stadiumService = stadiumService;
+        this.electionService = electionService;
     }
 
     @GetMapping("/status")
     public Map<String, Object> getStadiumStatus() {
-        var currentService = stadiumService.getCurrentInstanceService();
-
         return Map.of(
                 "instanceId", stadiumService.getCurrentInstanceId(),
-                "regionName", currentService != null ? currentService.getRegionName() : "Unknown",
-                "waitingPlayers", currentService != null ? currentService.getWaitingPlayersCount() : 0,
-                "activeBattles", currentService != null ? currentService.getActiveBattlesCount() : 0,
-                "isLeader", stadiumService.isLeader(),
-                "totalInstances", stadiumService.getTotalInstances(),
-                "playersInQueue", stadiumService.getPlayersInQueue()
+                "regionName", stadiumService.getCurrentInstanceService().getRegionName(),
+                "isLeader", electionService.isLeader(),
+                "leaderInstanceId", electionService.getCurrentLeader(),
+                "waitingPlayers", stadiumService.getWaitingPlayersCount(),
+                "activeBattles", stadiumService.getActiveBattlesCount()
         );
     }
 
@@ -42,4 +42,3 @@ public class StadiumController {
         return stadiumService.getCurrentInstanceService().getWaitingPlayers();
     }
 }
-
