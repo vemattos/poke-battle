@@ -57,8 +57,9 @@ public class BattleResponseConsumer {
         try {
             String json = objectMapper.writeValueAsString(message);
             wsHandler.sendToPlayer(targetUserId, json);
+            System.out.println("📡 [WS] Enviado para userId " + targetUserId + ": " + message.getType());
         } catch (Exception e) {
-            System.out.println("[PLAYER] Erro ao serializar/parar WS: " + e.getMessage());
+            System.out.println("❌ [WS] Erro ao enviar para userId " + targetUserId + ": " + e.getMessage());
         }
     }
 
@@ -76,8 +77,25 @@ public class BattleResponseConsumer {
         System.out.println("   BATALHA INICIADA!");
         System.out.println("   ID: " + message.getBattleId());
         System.out.println("   Você: " + (message.getUser() != null ? message.getUser().getName() : "anonymous"));
-        System.out.println("   Oponente: " + message.getOpponentName()); // ⚠️ Isso mostra nulo?
+        System.out.println("   Oponente: " + message.getOpponentName());
         System.out.println("   Instância: " + message.getInstanceId());
+
+        // ✅ CORREÇÃO: ENVIAR VIA WEBSOCKET PARA O JOGADOR
+        if (message.getUser() != null) {
+            forwardWs(message, message.getUser().getId());
+        }
+
+        // ✅ OPÇÃO: TAMBÉM ENVIAR PARA O OPONENTE SE POSSÍVEL
+        if (message.getOpponentName() != null) {
+            try {
+                User opponent = userService.getUserByName(message.getOpponentName());
+                if (opponent != null) {
+                    forwardWs(message, opponent.getId());
+                }
+            } catch (Exception e) {
+                System.out.println("⚠️ Não foi possível enviar BATTLE_START para oponente: " + e.getMessage());
+            }
+        }
     }
 
     private void handlePlayerAction(BattleMessage message) {

@@ -55,6 +55,14 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/name/{name}")
+    public ResponseEntity<User> getUserByName(@PathVariable String name) {
+        User user = userService.getUserByName(name);
+        return user != null ?
+                ResponseEntity.ok(user) :
+                ResponseEntity.notFound().build();
+    }
+
     @DeleteMapping("/{userId}/team/{pokemonId}")
     public ResponseEntity<User> removePokemonFromTeam(
             @PathVariable int userId,
