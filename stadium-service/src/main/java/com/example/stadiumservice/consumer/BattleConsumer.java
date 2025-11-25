@@ -63,6 +63,12 @@ public class BattleConsumer {
     @RabbitListener(queues = "#{@battleService.getInstanceId() != null ? " +
             "T(com.example.stadiumservice.config.RabbitMQConfig).BATTLE_REQUEST_QUEUE_PREFIX + @battleService.getInstanceId() : 'battle.request.queue.default'}")
     public void receiveBattleRequest(BattleMessage message) {
+        if (isResponseMessage(message)) {
+            System.out.println("[BattleConsumer] Ignorando mensagem de resposta: " + message.getType() +
+                    " - " + (message.getUser() != null ? message.getUser().getName() : "No User"));
+            return;
+        }
+
         String instanceId = message.getInstanceId();
         if (instanceId == null) {
             instanceId = stadiumService.getCurrentInstanceId();
@@ -82,6 +88,16 @@ public class BattleConsumer {
         handleBattleRequest(message, battleService, instanceId);
     }
 
+    private boolean isResponseMessage(BattleMessage message) {
+        return message.getType() == BattleMessage.MessageType.BATTLE_START ||
+                message.getType() == BattleMessage.MessageType.TURN_RESULT ||
+                message.getType() == BattleMessage.MessageType.BATTLE_END ||
+                (message.getType() == BattleMessage.MessageType.PLAYER_ACTION &&
+                        message.getBattleLog() != null &&
+                        !message.getBattleLog().contains("ERRO") &&
+                        !message.getBattleLog().contains("AGUARDE"));
+    }
+
     private BattleService getBattleServiceForMessage(BattleMessage message, String targetInstanceId) {
         if (message.getInstanceId() != null && !message.getInstanceId().equals(targetInstanceId)) {
             BattleService targetService = stadiumService.getAllInstanceServices().get(message.getInstanceId());
@@ -98,28 +114,25 @@ public class BattleConsumer {
             switch (message.getType()) {
                 case LOGIN:
                     if (message.getUser() != null) {
+                        System.out.println("Processando LOGIN para: " + message.getUser().getName());
                         battleService.handlePlayerLogin(message.getUser());
                     } else {
-                        System.out.println(" User é null na mensagem LOGIN");
+                        System.out.println("User é null na mensagem LOGIN");
                     }
                     break;
 
                 case PLAYER_ACTION:
                     if (message.getUser() != null && message.getBattleId() != null) {
+                        System.out.println("Processando PLAYER_ACTION para: " + message.getUser().getName() +
+                                " | Battle: " + message.getBattleId());
                         battleService.handleBattleAction(message);
                     } else {
                         System.out.println("Dados incompletos na mensagem PLAYER_ACTION");
                     }
                     break;
 
-                case BATTLE_START:
-                case TURN_RESULT:
-                case BATTLE_END:
-                    System.out.println("Mensagem de tipo " + message.getType() + " recebida no consumer - geralmente é de saída");
-                    break;
-
                 default:
-                    System.out.println("Tipo de request não reconhecido: " + message.getType());
+                    System.out.println("⚠Tipo de request não reconhecido: " + message.getType());
             }
         } catch (Exception e) {
             System.out.println("Erro ao processar mensagem na instância " + instanceId + ": " + e.getMessage());
@@ -129,7 +142,7 @@ public class BattleConsumer {
 
     public void registerInstanceBattleService(String instanceId, BattleService battleService) {
         instanceBattleServices.put(instanceId, battleService);
-        System.out.println("Nova instância registrada no BattleConsumer: " + instanceId);
+        System.out.println("🆕 Nova instância registrada no BattleConsumer: " + instanceId);
     }
 
     public String getCurrentInstanceQueueName() {

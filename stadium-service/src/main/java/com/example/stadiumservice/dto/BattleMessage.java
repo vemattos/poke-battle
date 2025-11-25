@@ -13,7 +13,7 @@ public class BattleMessage {
     private BattleAction action;
     private Integer damage;
     private String battleLog;
-    private String instanceId; // NOVO CAMPO
+    private String instanceId;
 
     public BattleMessage() {
     }

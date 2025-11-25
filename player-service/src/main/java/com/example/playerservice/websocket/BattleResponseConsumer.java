@@ -63,7 +63,12 @@ public class BattleResponseConsumer {
     }
 
     private void handleBattleStart(BattleMessage message) {
-        // registra instancia no controller (se aplicável)
+        // ✅ LOG PARA VERIFICAR SE opponentName CHEGOU
+        System.out.println("🎯 DEBUG Consumer - OpponentName recebido: " + message.getOpponentName());
+        System.out.println("🎯 DEBUG Consumer - User recebido: " +
+                (message.getUser() != null ? message.getUser().getName() : "null"));
+
+        // Registra instância
         if (message.getInstanceId() != null && message.getBattleId() != null) {
             battleController.registerBattleInstance(message.getBattleId(), message.getInstanceId());
         }
@@ -71,20 +76,8 @@ public class BattleResponseConsumer {
         System.out.println("   BATALHA INICIADA!");
         System.out.println("   ID: " + message.getBattleId());
         System.out.println("   Você: " + (message.getUser() != null ? message.getUser().getName() : "anonymous"));
-        System.out.println("   Oponente: " + message.getOpponentName());
+        System.out.println("   Oponente: " + message.getOpponentName()); // ⚠️ Isso mostra nulo?
         System.out.println("   Instância: " + message.getInstanceId());
-
-        if (message.getUser() != null) {
-            // envia ao jogador (player que recebeu a mensagem)
-            forwardWs(message, message.getUser().getId());
-        }
-
-        if(message.getOpponentName() != null){
-            User opponent = userService.getUserByName(message.getOpponentName());
-            if(opponent != null){
-                forwardWs(message, opponent.getId());
-            }
-        }
     }
 
     private void handlePlayerAction(BattleMessage message) {
